@@ -1,0 +1,5 @@
+node_modules/
+teardown-out/
+# the teardown skill is installed by `npm run setup` (third-party clone + node_modules)
+.claude/
+.DS_Store

@@ -1,0 +1,13 @@
+{
+  "name": "octopus-teardown",
+  "private": true,
+  "description": "Pelagos OC-8 robotic octopus, rebuilt with the teardown skill",
+  "scripts": {
+    "setup": "bash setup.sh",
+    "build": "node .claude/skills/teardown/sims/build.mjs ./sims/octopus-live ./sims/octopus-film",
+    "open": "open teardown-out/dist/octopus-live.html",
+    "beats": "node .claude/skills/teardown/sims/capture.mjs octopus-film --size 1600x900 --dpr 1.2 --stills beats --timeline sims/octopus-film/timeline.json --cols 3 --out teardown-out/octopus-beats.png",
+    "video": "node .claude/skills/teardown/sims/capture.mjs octopus-film --size 1600x900 --dpr 1.2 --out teardown-out/octopus-silent.mp4",
+    "pages": "npm run build && mkdir -p docs && cp teardown-out/dist/octopus-live.html docs/index.html && cp teardown-out/dist/octopus-film.html docs/film.html && touch docs/.nojekyll"
+  }
+}
