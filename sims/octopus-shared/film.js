@@ -3,7 +3,7 @@
 // opens the beak, explodes every assembly, spins it on the turntable and resets to the hero view. Eight actions,
 // 25 seconds, everything a pure function of t.
 import {runSim} from 'teardown-kit/runtime.js';
-import {ARM_NAMES, ARMS, bodyPose, COUNTS, curlAt, JET_HZ, jetAt, LINK_R, SPEC} from './kin.js';
+import {ARM_NAMES, ARMS, bodyPose, COUNTS, curlAt, GLASS_K, JET_HZ, jetAt, LINK_R, SPEC} from './kin.js';
 import {createConsole, FOCUS_KEYS} from './console.js';
 import {createOctoStage} from './stage.js';
 
@@ -96,14 +96,14 @@ export const opsOf = (S) => ({
 
 // ------------------------------------------------------------ views, degrees; u = seconds since the view began
 export const VIEW_FN = {
-  hero: (u) => ({tx: 0.05, ty: 0.78, tz: 0, az: 24 + 1.1 * u, el: 13, d: 6.4, sx: 0, sy: -12}),
+  hero: (u) => ({tx: 0.05, ty: 0.78, tz: 0, az: 24 + 1.1 * u, el: 14, d: 7.2, sx: 0, sy: -12}),
   optics: (u) => ({tx: 0, ty: 0.9, tz: 0.25, az: 6 + 1.2 * u, el: 12, d: 3.8, sx: 0, sy: -10}),
-  mantle: (u) => ({tx: 0, ty: 1.0, tz: 0, az: -28 + 1.6 * u, el: 28, d: 5.6, sx: 0, sy: -10}),
-  arm: (u) => ({tx: -0.75, ty: 0.85, tz: 0.3, az: 36 - 1.2 * u, el: 15, d: 6.0, sx: 0, sy: -18}),
+  mantle: (u) => ({tx: 0, ty: 1.0, tz: 0, az: -28 + 1.6 * u, el: 26, d: 6.2, sx: 0, sy: -10}),
+  arm: (u) => ({tx: -0.75, ty: 0.85, tz: 0.3, az: 36 - 1.2 * u, el: 15, d: 6.8, sx: 0, sy: -18}),
   siphon: (u) => ({tx: 0, ty: 0.8, tz: -0.4, az: 152 + 1.4 * u, el: 9, d: 5.4, sx: 0, sy: -14}),
   beak: (u) => ({tx: 0, ty: 0.55, tz: 0.1, az: 34 + 1.5 * u, el: 9, d: 5.0, sx: 0, sy: -20}),
-  wide: (u) => ({tx: 0, ty: 0.9, tz: 0, az: 40 + 1.8 * u, el: 21, d: 7.6, sx: 0, sy: -12}),
-  turn: (u) => ({tx: 0, ty: 0.85, tz: 0, az: 44, el: 16, d: 7.0, sx: 0, sy: -12}),
+  wide: (u) => ({tx: 0, ty: 0.9, tz: 0, az: 40 + 1.8 * u, el: 21, d: 8.4, sx: 0, sy: -12}),
+  turn: (u) => ({tx: 0, ty: 0.85, tz: 0, az: 44, el: 16, d: 7.8, sx: 0, sy: -12}),
 };
 const VIEWS = SCRIPT.filter((e) => e.focus || e.display).map((e) => [e.t, stateAt(e.t + 1e-6).view]);
 const lerpDeg = (a, b, k) => a + ((((b - a + 540) % 360) - 180) * k);
@@ -167,8 +167,8 @@ const CALLS = {
   hero: [
     ['MANTLE SHELL', `${SPEC.petals} PETALS · Ø ${mm(SPEC.mantleR * 2)}`, (P) => P.shellPetal()],
     ['OPTIC PORT', `${SPEC.lens} MM LENS`, (P) => P.optic(1)],
-    ['ARM CHAIN', `${SPEC.links} LINKS PER ARM`, (P) => P.link(4, 4)],
-    ['SUCTION WHEEL', `${COUNTS.wheels} ON 8 ARMS`, (P) => P.wheel(5, 6)],
+    ['ARM CHAIN', `${SPEC.links} LINKS PER ARM`, (P) => P.link(4, 8)],
+    ['SUCTION WHEEL', `${COUNTS.wheels} ON 8 ARMS`, (P) => P.wheel(5, 12)],
   ],
   optics: [
     ['OPTIC PORT · L', `${SPEC.lens} MM LENS · ${SPEC.rim} MM RIM`, (P) => P.optic(1)],
@@ -182,9 +182,10 @@ const CALLS = {
     ['GLASS PORT', 'ACRYLIC · 8 MM', (P) => P.glassPort()],
   ],
   arm: [
-    ['ROLL JOINT', 'ONE PER LINK', (P) => P.link(1, 3)],
-    ['BOOT ACTUATOR', `INNER CORE · ${mm(LINK_R[6] * 1.04)}`, (P) => P.link(1, 7)],
-    ['SUCTION WHEEL', `4 PER LINK · Ø ${mm(LINK_R[9] * 0.68)}`, (P) => P.wheel(1, 9)],
+    ['ROOT ACTUATOR', `Ø ${mm(LINK_R[0] * 2)} · IN COLLAR`, (P) => P.link(1, 0)],
+    ['BALL JOINT', 'ONE PER LINK', (P) => P.joint(1, 5)],
+    ['GLASS LINK', `INNER CORE · ${mm(LINK_R[GLASS_K] * 1.04)}`, (P) => P.link(1, GLASS_K)],
+    ['SUCTION WHEEL', `4 PER LINK · Ø ${mm(LINK_R[17] * 0.88)}`, (P) => P.wheel(1, 17)],
     ['SPIRAL TIP', `Ø ${mm(LINK_R[SPEC.links - 1] * 2)}`, (P) => P.tip(1)],
   ],
   siphon: [

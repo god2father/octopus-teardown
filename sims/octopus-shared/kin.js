@@ -9,9 +9,9 @@ export const SPEC = {
   rideH: 1.02, // body centre above the floor, m
   collarY: -0.32, // arm roots: the ring where the hull meets the bowl, height in the body frame
   bossL: 0.07, // each root socket stands this far proud of the hull
-  links: 18, // links per arm
-  r0: 0.12, // first link radius
-  rTip: 0.035, // last link radius
+  links: 35, // links per arm (the reference's console reads 282 links on 8 arms)
+  r0: 0.095, // first link radius
+  rTip: 0.02, // last link radius
   lenK: 2.0, // link length / radius
   lens: 92, // optic lens, mm
   rim: 28, // optic rim, mm
@@ -41,6 +41,9 @@ export const LINK_L = LINK_R.map((r) => r * SPEC.lenK);
 export const ARM_LEN = LINK_L.reduce((a, b) => a + b, 0);
 // two pairs of suction wheels on every link but the root one, which sits in the collar
 export const WHEELS_PER_ARM = (N - 1) * 4;
+// glass links: every 6th link from the 3rd has a clear sleeve over its core (the reference's GLASS LINK)
+export const isGlass = (k) => k % 6 === 3 && k < N - 4;
+export const GLASS_K = 9;
 export const COUNTS = {links: N * 8, wheels: WHEELS_PER_ARM * 8, arms: 8};
 
 // ------------------------------------------------------------ the eight arms
@@ -48,15 +51,16 @@ export const COUNTS = {links: N * 8, wheels: WHEELS_PER_ARM * 8, arms: 8};
 const AZ = [-24, -66, -114, -156, 24, 66, 114, 156];
 // per arm: root pitch (deg), droop under its own weight (rad/m over the first half), the curl it rests at, its yaw
 // curvature and a phase for its slow breathing. Front arms lift and curl high, side arms reach out and touch down.
+// lift: an upward bend over the second quarter that raises the arm over the body, as the reference's arms do
 const SHAPE = [
-  {p0: -3, droop: 1.3, curl: 0.86, yaw: 0.5, ph: 0.0},
-  {p0: 0, droop: 1.65, curl: 0.72, yaw: -0.2, ph: 1.7},
-  {p0: 0, droop: 1.6, curl: 0.82, yaw: 0.25, ph: 3.1},
-  {p0: 2, droop: 1.45, curl: 0.78, yaw: -0.3, ph: 4.4},
-  {p0: -3, droop: 1.25, curl: 0.92, yaw: -0.5, ph: 0.9},
-  {p0: 0, droop: 1.6, curl: 0.76, yaw: 0.2, ph: 2.4},
-  {p0: 0, droop: 1.7, curl: 0.84, yaw: -0.25, ph: 3.8},
-  {p0: 2, droop: 1.5, curl: 0.8, yaw: 0.3, ph: 5.2},
+  {p0: -3, droop: 1.3, curl: 0.86, yaw: 0.5, ph: 0.0, lift: 0},
+  {p0: 0, droop: 1.65, curl: 0.72, yaw: -0.2, ph: 1.7, lift: 1.5},
+  {p0: 0, droop: 1.6, curl: 0.82, yaw: 0.25, ph: 3.1, lift: 0.4},
+  {p0: 2, droop: 1.45, curl: 0.78, yaw: -0.3, ph: 4.4, lift: 1.8},
+  {p0: -3, droop: 1.25, curl: 0.92, yaw: -0.5, ph: 0.9, lift: 0},
+  {p0: 0, droop: 1.6, curl: 0.76, yaw: 0.2, ph: 2.4, lift: 1.3},
+  {p0: 0, droop: 1.7, curl: 0.84, yaw: -0.25, ph: 3.8, lift: 0.6},
+  {p0: 2, droop: 1.5, curl: 0.8, yaw: 0.3, ph: 5.2, lift: 1.7},
 ];
 export const ARMS = ARM_NAMES.map((name, i) => ({name, az: AZ[i] * D2R, ...SHAPE[i]}));
 
@@ -90,7 +94,7 @@ export function jetAt(t, J) {
 /** How tightly an arm's tip is spiralled, 0 straight to 1 a full tight coil. */
 export function curlAt(i, t, apart = 0) {
   const a = ARMS[i];
-  const c = a.curl + 0.08 * Math.sin(t * 0.7 + a.ph) + 0.04 * Math.sin(t * 1.9 + a.ph * 2);
+  const c = a.curl + 0.12 * Math.sin(t * 0.7 + a.ph) + 0.05 * Math.sin(t * 1.9 + a.ph * 2);
   return Math.min(1, Math.max(0, c)) * (1 - apart);
 }
 
@@ -123,7 +127,7 @@ export function armPose(i, t, ops = {}) {
   for (let k = 0; k < N; k++) {
     const r = LINK_R[k];
     const l = LINK_L[k];
-    const gap = (0.01 + 0.5 * r) * apart + 0.25 * r * spread;
+    const gap = (0.02 + 0.95 * r) * apart + 0.25 * r * spread;
     // the gap: straight along the current heading
     {
       const cp = Math.cos(pitch);
@@ -140,8 +144,11 @@ export function armPose(i, t, ops = {}) {
       // (the reference holds its arms out from the body, so the droop is gentle: 0.62 of each arm's weight figure)
       const droop = -0.62 * A.droop * smooth(0.04, 0.16, u) * (1 - smooth(0.3, 0.46, u));
       const level = 1.25 * smooth(0.36, 0.46, u) * (1 - smooth(0.5, 0.6, u));
-      const spiral = curl * smooth(0.5, 0.78, u) * (0.2 / r);
-      const k1 = (droop + level) * keep + spiral;
+      // the tip: curvature 0.45 / r keeps each wrap ~2.2 link radii across, so the thinning tip winds 1.5-2 tight
+      // turns (the reference's watch-spring tips) without the wraps passing through each other
+      const spiral = curl * smooth(0.5, 0.66, u) * (0.45 / r);
+      const lift = A.lift * (1 + 0.15 * Math.sin(t * 0.6 + A.ph)) * smooth(0.1, 0.22, u) * (1 - smooth(0.3, 0.46, u));
+      const k1 = (droop + level + lift) * keep + spiral;
       const k2 = A.yaw * Math.sin(u * Math.PI) * keep * 0.6;
       pitch += k1 * ds;
       yaw += k2 * ds;

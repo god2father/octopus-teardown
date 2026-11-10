@@ -3,7 +3,7 @@
 // riding on 552 suction wheels (instanced). update(t, ops) poses everything from kin.js.
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {ARMS, armPose, bodyPose, jetAt, SPEC} from './kin.js';
+import {ARMS, armPose, bodyPose, isGlass, jetAt, SPEC} from './kin.js';
 import {rng} from 'teardown-kit/util.js';
 
 const V3 = THREE.Vector3;
@@ -20,10 +20,12 @@ export const COLORS = {white: '#f4f3f0', orange: '#ec4b1c', black: '#1c1c1f', st
 // (bumpMap) where seams are sunk grooves, rivets raised domes and paint flat. The palette is swapped per pass.
 const INK = {paper: '#f4f2ee', seam: '#55555a', rivet: '#1d1d20', ink: '#1d1d20', orange: '#ec4b1c', glass: '#16181b', grey: '#3a3d42', label: '#f4f2ee'};
 const HGT = {paper: '#808080', seam: '#2a2a2a', rivet: '#ffffff', ink: '#808080', orange: '#868686', glass: '#5a5a5a', grey: '#5a5a5a', label: '#808080', bump: true};
+// cut-out: white is shell, black is a window you look through into the real core
+const CUT = {paper: '#ffffff', seam: '#ffffff', rivet: '#ffffff', ink: '#ffffff', orange: '#ffffff', glass: '#000000', grey: '#000000', label: '#ffffff', cut: true};
 let C = INK;
 function shellTexture(w, h, draw) {
   const out = {};
-  for (const [key, pal] of [['map', INK], ['bump', HGT]]) {
+  for (const [key, pal] of [['map', INK], ['bump', HGT], ['cut', CUT]]) {
     C = pal;
     const c = document.createElement('canvas');
     c.width = w;
@@ -32,7 +34,7 @@ function shellTexture(w, h, draw) {
     g.fillStyle = C.paper;
     g.fillRect(0, 0, w, h);
     draw(g, w, h);
-    if (!pal.bump) {
+    if (pal === INK) {
       // faint mottling so large white panels are not a perfect flat fill
       const n = rng(w + h);
       g.globalAlpha = 0.035;
@@ -55,7 +57,8 @@ const rivets = (g, x0, y0, x1, y1, step, rad = 2.4) => {
   for (let i = 0; i <= n; i++) {
     const x = x0 + ((x1 - x0) * i) / n;
     const y = y0 + ((y1 - y0) * i) / n;
-    if (C.bump) {
+    if (C.cut) g.fillStyle = C.rivet;
+    else if (C.bump) {
       const gr = g.createRadialGradient(x, y, 0, x, y, rad * 1.3);
       gr.addColorStop(0, '#ffffff');
       gr.addColorStop(1, '#808080');
@@ -74,6 +77,7 @@ const seam = (g, x0, y0, x1, y1, lw) => {
   g.lineTo(x1, y1);
   g.stroke();
 };
+const WINDOWS = [0, 3, 5];
 function petalTexture(k) {
   return shellTexture(512, 768, (g, w, h) => {
     const r = rng(101 + k * 7);
@@ -90,22 +94,22 @@ function petalTexture(k) {
     rivets(g, 40, ys + 18, w - 40, ys + 18, 26, 3.6);
     rivets(g, 40, ys - 18, w - 40, ys - 18, 26, 3.6);
     rivets(g, 40, h - 22, w - 40, h - 22, 26, 3.6);
-    if (k === 0 || k === 4) {
-      // a glass port with the core's orange showing through, framed by a raised bezel
+    // the field: the reference's shell is sprinkled with fasteners, not just seamed
+    for (const fy of [0.08, 0.2, 0.32, 0.56, 0.68, 0.8, 0.9]) rivets(g, 56, h * fy, w - 56, h * fy, 46, 3);
+    rivets(g, w * 0.5 - 14, ys + 34, w * 0.5 - 14, h - 40, 30, 3);
+    rivets(g, w * 0.5 + 14, ys + 34, w * 0.5 + 14, h - 40, 30, 3);
+    if (WINDOWS.includes(k)) {
+      // a glass port: a raised bezel round a hole cut through the petal (the core behind it is real geometry)
       g.fillStyle = C.seam;
       g.beginPath();
-      g.roundRect(w * 0.2 - 6, h * 0.1 - 6, w * 0.6 + 12, h * 0.28 + 12, 22);
+      g.roundRect(w * 0.2 - 10, h * 0.1 - 10, w * 0.6 + 20, h * 0.3 + 20, 26);
       g.fill();
       g.fillStyle = C.glass;
       g.beginPath();
-      g.roundRect(w * 0.2, h * 0.1, w * 0.6, h * 0.28, 18);
+      g.roundRect(w * 0.2, h * 0.1, w * 0.6, h * 0.3, 18);
       g.fill();
-      g.fillStyle = C.orange;
-      g.fillRect(w * 0.3, h * 0.3, w * 0.4, h * 0.04);
-      g.fillStyle = C.grey;
-      g.fillRect(w * 0.26, h * 0.13, w * 0.05, h * 0.21);
-      g.fillRect(w * 0.6, h * 0.16, w * 0.12, h * 0.02);
-      rivets(g, w * 0.2 + 12, h * 0.1 - 16, w * 0.8 - 12, h * 0.1 - 16, 22, 3);
+      rivets(g, w * 0.2 + 12, h * 0.1 - 24, w * 0.8 - 12, h * 0.1 - 24, 22, 3);
+      rivets(g, w * 0.2 + 12, h * 0.4 + 24, w * 0.8 - 12, h * 0.4 + 24, 22, 3);
     } else if (k % 2 === 1) {
       g.fillStyle = C.ink;
       g.fillRect(w * (0.3 + 0.2 * r()), h * 0.6, w * 0.18, h * 0.04);
@@ -133,6 +137,7 @@ function hullTexture() {
     seam(g, 0, h * 0.62, w, h * 0.62, 3);
     rivets(g, 16, 24, w - 16, 24, 24, 3.6);
     rivets(g, 16, h * 0.62 + 18, w - 16, h * 0.62 + 18, 24, 3.2);
+    for (const fy of [0.3, 0.48, 0.86]) rivets(g, 40, h * fy, w - 40, h * fy, 40, 3);
     // marks around the band (the optics sit in the front quarter, u ~ 0.25 is +z)
     g.fillStyle = C.ink;
     for (const u of [0.06, 0.46, 0.56, 0.68, 0.94]) g.fillRect(u * w, h * 0.42, 92, 18);
@@ -160,6 +165,9 @@ function gearGeo(rOut, teeth, thick) {
   return new THREE.ExtrudeGeometry(s, {depth: thick, bevelEnabled: false, curveSegments: 4}).translate(0, 0, -thick / 2);
 }
 
+// siphon sleeves: [radius, length], nested so each slides out of the one above
+const SLEEVES = [[0.07, 0.2], [0.058, 0.19], [0.047, 0.17]];
+
 export function buildRobot() {
   // Painted composite under a clear coat: a satin base with a glossy lacquer on top, so every curved part carries a
   // soft broad sheen plus a tight highlight, the way the reference's white shell does. Rubber tyres stay dull.
@@ -173,6 +181,7 @@ export function buildRobot() {
     inner: new THREE.MeshStandardMaterial({color: '#6f6b66', roughness: 0.8, metalness: 0, side: THREE.BackSide}),
     glass: new THREE.MeshPhysicalMaterial({color: COLORS.glass, roughness: 0.05, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, transparent: true, opacity: 0.45, depthWrite: false, envMapIntensity: 1.4}),
     lensRing: new THREE.MeshStandardMaterial({color: '#2c2f34', roughness: 0.3, metalness: 0.8}),
+    glassSleeve: new THREE.MeshPhysicalMaterial({color: '#dfe7ea', roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: 1.5}),
   };
   const shellMat = (tex) => {
     const m = M.white.clone();
@@ -199,9 +208,22 @@ export function buildRobot() {
     // three's sphere: x = -cos(phi) sin(theta), z = sin(phi) sin(theta); petal 0 centred on the front (+z), phi = 90°
     const phi0 = PI / 2 + k * PH - PH / 2 + 0.006;
     const geo = new THREE.SphereGeometry(R, 28, 24, phi0, PH - 0.012, TH_TOP, TH_EQ - TH_TOP);
-    const mat = shellMat(petalTexture(k));
+    const tex = petalTexture(k);
+    const mat = shellMat(tex);
+    const win = WINDOWS.includes(k);
+    if (win) {
+      mat.alphaMap = tex.cut;
+      mat.alphaTest = 0.5;
+    }
     const outer = shadowy(new THREE.Mesh(geo, mat));
-    const inner = new THREE.Mesh(new THREE.SphereGeometry(R * 0.975, 20, 16, phi0, PH - 0.012, TH_TOP, TH_EQ - TH_TOP), M.inner);
+    const innerMat = win ? Object.assign(M.inner.clone(), {alphaMap: tex.cut, alphaTest: 0.5}) : M.inner;
+    const inner = new THREE.Mesh(new THREE.SphereGeometry(R * 0.975, 20, 16, phi0, PH - 0.012, TH_TOP, TH_EQ - TH_TOP), innerMat);
+    if (win) {
+      // the pane, sunk a little into the hole so the bezel shadows it
+      const pane = new THREE.Mesh(new THREE.SphereGeometry(R * 0.985, 20, 16, phi0, PH - 0.012, TH_TOP, TH_EQ - TH_TOP), M.glass);
+      pane.renderOrder = 2;
+      outer.add(pane);
+    }
     // hinge on the bottom edge, at the petal's centre
     const pm = phi0 + (PH - 0.012) / 2;
     const radial = new V3(-Math.cos(pm), 0, Math.sin(pm));
@@ -273,14 +295,15 @@ export function buildRobot() {
     core.add(shadowy(new THREE.Mesh(new THREE.SphereGeometry(0.23, 32, 20), M.black)));
     const r = rng(7);
     const tubes = [];
-    for (let i = 0; i < 46; i++) {
+    // the reference's core is a dense ball of hydraulic hose, wider than it is tall, filling the whole shell
+    for (let i = 0; i < 120; i++) {
       const pts = [];
-      const c = new V3(r() - 0.5, r() - 0.3, r() - 0.5).normalize();
-      for (let j = 0; j < 7; j++) {
-        const d = c.clone().add(new V3(r() - 0.5, r() - 0.5, r() - 0.5).multiplyScalar(1.4)).normalize();
-        pts.push(d.multiplyScalar(0.24 + r() * 0.12));
+      const c = new V3(r() - 0.5, r() - 0.35, r() - 0.5).normalize();
+      for (let j = 0; j < 8; j++) {
+        const d = c.clone().add(new V3(r() - 0.5, r() - 0.5, r() - 0.5).multiplyScalar(1.6)).normalize();
+        pts.push(d.multiplyScalar(0.2 + r() * 0.17).multiply(new V3(1, 0.88, 1)));
       }
-      tubes.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 48, 0.0075 + r() * 0.005, 5, true));
+      tubes.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 56, 0.007 + r() * 0.006, 6, true));
     }
     core.add(shadowy(new THREE.Mesh(mergeGeometries(tubes), new THREE.MeshStandardMaterial({color: '#151517', roughness: 0.35, metalness: 0.2}))));
     const ring = shadowy(new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.022, 14, 72).rotateX(PI / 2), M.orange));
@@ -348,14 +371,13 @@ export function buildRobot() {
   // ------------------------------------------------------------ siphon: three telescoping sleeves and a 4-flap nozzle
   const siphon = new THREE.Group();
   {
-    const th = 0.64 * PI;
-    const dir = new V3(0, Math.cos(th), -Math.sin(th));
-    siphon.position.copy(dir).multiplyScalar(R * 0.9);
-    siphon.lookAt(siphon.position.clone().add(new V3(0, -0.45, -1)));
+    // under the bowl, just behind the beak, hanging straight down as in the reference (a slight rake aft)
+    siphon.position.set(0, SPEC.collarY - 0.16, -0.19);
+    siphon.lookAt(siphon.position.clone().add(new V3(0, -1, -0.18)));
     body.add(siphon);
   }
   const sleeves = [];
-  [[0.08, 0.1], [0.066, 0.1], [0.053, 0.1]].forEach(([r, h], i) => {
+  SLEEVES.forEach(([r, h], i) => {
     const m = shadowy(new THREE.Mesh(cylZ(r, h, 32), i === 1 ? M.black : M.white));
     siphon.add(m);
     const b = new THREE.Mesh(cylZ(r * 1.04, 0.015, 32), M.orange);
@@ -373,7 +395,7 @@ export function buildRobot() {
     const f = shadowy(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.006, 0.07).translate(0, 0, 0.035), M.black));
     arm.add(f);
     sleeves[2].add(hinge);
-    hinge.position.z = 0.05;
+    hinge.position.z = SLEEVES[2][1] / 2;
     flaps.push(arm);
   }
 
@@ -425,6 +447,8 @@ export function buildRobot() {
   })();
   const P = {
     shell: part(shellGeo, M.white, NL),
+    glass: part(shellGeo, M.glassSleeve, NL),
+    coreRing: part(mergeGeometries([cylX(0.62, 0.08, 20).translate(0.35, 0, 0), cylX(0.62, 0.08, 20).translate(-0.35, 0, 0)]), M.orange, NL),
     band: part(cylX(1.02, 0.16, 40).translate(0.52, 0, 0), M.orange, NL),
     plate: part(mergeGeometries([new THREE.BoxGeometry(0.5, 0.26, 0.06).translate(-0.22, 0.3, 0.985), new THREE.BoxGeometry(0.5, 0.26, 0.06).translate(-0.22, 0.3, -0.985), new THREE.BoxGeometry(0.9, 0.05, 0.03).translate(-0.05, 0.98, 0).rotateX(0)]), M.black, NL),
     joint: part(mergeGeometries([cylX(0.72, 0.36, 24).translate(-0.98, 0, 0), new THREE.TorusGeometry(0.66, 0.09, 10, 28).rotateY(Math.PI / 2).translate(-0.98, 0, 0), cylX(0.8, 0.06, 28).translate(-0.86, 0, 0)]), M.black, NL),
@@ -465,13 +489,14 @@ export function buildRobot() {
     const open = mantleOpen;
     petals.forEach((p, k) => {
       const wob = open * 0.04 * Math.sin(t * 1.3 + k);
-      p.pivot.position.copy(p.hinge).addScaledVector(p.radial, 0.1 * open + 0.12 * spread).setY(p.hinge.y + 0.1 * open);
-      p.pivot.quaternion.setFromAxisAngle(p.axis, (52 * PI) / 180 * open + wob);
+      p.pivot.position.copy(p.hinge).addScaledVector(p.radial, 0.14 * open + 0.12 * spread).setY(p.hinge.y + 0.04 * open);
+      p.pivot.quaternion.setFromAxisAngle(p.axis, (84 * PI) / 180 * open + wob);
     });
-    cap.position.y = 0.36 * open + 0.22 * spread;
+    cap.position.y = 0.66 * open + 0.22 * spread;
     cap.rotation.y = 0.6 * open;
     // the core turns its gears with the pump, its pistons stroke with each jet pulse
-    core.position.y = 0.05 * open;
+    core.position.y = 0.3 * open;
+    core.scale.setScalar(1 + 0.38 * open);
     core.rotation.y = t * 0.15;
     core.userData.gears[0].rotation.z = t * 1.2 * (0.4 + J);
     core.userData.gears[1].rotation.z = -t * 1.2 * (0.4 + J) * (16 / 11);
@@ -485,9 +510,9 @@ export function buildRobot() {
     });
     // siphon: sleeves telescope out and the flaps open with the jet
     const ext = 0.25 + 0.75 * J * (0.4 + 0.6 * jet.pulse / Math.max(J, 1e-3));
-    sleeves[0].position.z = 0.04 + 0.1 * spread;
-    sleeves[1].position.z = sleeves[0].position.z + 0.04 + 0.05 * ext;
-    sleeves[2].position.z = sleeves[1].position.z + 0.04 + 0.05 * ext;
+    sleeves[0].position.z = 0.08 + 0.1 * spread;
+    sleeves[1].position.z = sleeves[0].position.z + 0.05 + 0.1 * ext;
+    sleeves[2].position.z = sleeves[1].position.z + 0.05 + 0.1 * ext;
     flaps.forEach((f) => (f.rotation.x = -(0.15 + 0.55 * jet.pulse + 0.2 * J)));
     // beak
     beak.position.y = collarY - 0.24 - 0.16 * spread;
@@ -512,17 +537,25 @@ export function buildRobot() {
         const r = L.r;
         const up = 1.5 * apart * r;
         const dn = 0.95 * apart * r;
-        const at = (dy) => [L.p[0] + L.N[0] * dy, L.p[1] + L.N[1] * dy - 0.06 * spread, L.p[2] + L.N[2] * dy];
-        set(P.shell, li, at(up), r);
-        set(P.band, li, at(up), r);
-        set(P.plate, li, at(up), r);
-        set(P.joint, li, at(0), r);
-        set(P.core, li, at(0), apart > 0.01 ? r : 0.0001);
+        // on teardown the sleeves lift off alternately high and low, so the chain reads as parts, not a pipe
+        const zig = apart * r * (k % 2 ? 0.55 : -0.25);
+        const at = (dy, dt = 0) => [L.p[0] + L.N[0] * dy + L.T[0] * dt, L.p[1] + L.N[1] * dy + L.T[1] * dt - 0.06 * spread, L.p[2] + L.N[2] * dy + L.T[2] * dt];
+        const glass = isGlass(k);
+        set(P.shell, li, at(up + zig), glass ? 1e-4 : r);
+        set(P.glass, li, at(up + zig), glass ? r : 1e-4);
+        set(P.band, li, at(up + zig), r);
+        set(P.plate, li, at(up + zig), glass ? 1e-4 : r);
+        // the joint disc floats to the middle of the gap it bridges
+        set(P.joint, li, at(0, -0.5 * L.gap), r);
+        set(P.core, li, at(0), r);
+        set(P.coreRing, li, at(0), glass || apart > 0.01 ? r : 1e-4);
         if (k > 0)
           for (const along of [-0.42, 0.42])
             for (const s of [-1, 1]) {
-              const o = at(-1.0 * r - dn);
-              const w = [o[0] + vB.x * 0.6 * r * s + vT.x * along * r, o[1] + vB.y * 0.6 * r * s + vT.y * along * r, o[2] + vB.z * 0.6 * r * s + vT.z * along * r];
+              // wheels drop out and fan sideways on teardown
+              const o = at(-1.0 * r - dn * (1.4 + 0.5 * along), along * apart * r * 0.6);
+              const side = (0.6 + 1.1 * apart) * r * s;
+              const w = [o[0] + vB.x * side + vT.x * along * r, o[1] + vB.y * side + vT.y * along * r, o[2] + vB.z * side + vT.z * along * r];
               set(P.tire, wi, w, r);
               set(P.hub, wi, w, r);
               wi++;
@@ -549,6 +582,10 @@ export function buildRobot() {
     beak: () => wp(beak, 0, -0.1, 0),
     collar: () => wp(lower, 0, collarY, R * 0.6),
     link: (a, k) => bw(armOut[a].links[k].p),
+    joint: (a, k) => {
+      const L = armOut[a].links[k];
+      return bw([L.p[0] - L.T[0] * (L.r * 0.98 + L.gap * 0.5), L.p[1] - L.T[1] * (L.r * 0.98 + L.gap * 0.5), L.p[2] - L.T[2] * (L.r * 0.98 + L.gap * 0.5)]);
+    },
     wheel: (a, k) => {
       const L = armOut[a].links[k];
       return bw([L.p[0] - L.N[0] * L.r * 1.6, L.p[1] - L.N[1] * L.r * 1.6, L.p[2] - L.N[2] * L.r * 1.6]);
