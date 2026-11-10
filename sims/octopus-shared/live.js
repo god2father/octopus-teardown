@@ -4,6 +4,7 @@
 // operator's cursor; any click, drag, wheel or key hands control over, and 25 s of quiet hands it back.
 import {warmComposer} from 'teardown-kit/warm.js';
 import {createConsole, DISPLAY_KEYS, FOCUS_KEYS} from './console.js';
+import {bi} from './i18n.js';
 import {DURATION, makeConsoleFrame, makeCursor, opsOf, stateAt, VIEW_FN} from './film.js';
 import {createOctoStage, BG} from './stage.js';
 
@@ -268,7 +269,7 @@ export function runLive() {
 
     if (tourChip.classList.contains('on') !== AP.on || !tourChip.firstChild) {
       tourChip.classList.toggle('on', AP.on);
-      tourChip.innerHTML = AP.on ? '<i></i>AUTO TOUR · CLICK TO TAKE OVER' : '▶ RESUME TOUR';
+      tourChip.innerHTML = AP.on ? `<i></i>${bi('AUTO TOUR')} · ${bi('CLICK TO TAKE OVER')}` : `▶ ${bi('RESUME TOUR')}`;
     }
     if (!window.SIM_SHOWN) {
       window.SIM_SHOWN = true;
