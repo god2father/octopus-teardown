@@ -1,0 +1,142 @@
+{
+ "_about": "Target sizes read off the reference sheet at 79 px/m (ref grid crops of the front and right-side views, fin tip 18.03 m). Metres. x lateral (+ = suit's left), y up from the sole, z forward from the shoulder line. Each target names a group of meshes and the bounds to check; tol is the allowed error in metres.",
+ "targets": [
+  {
+   "id": "fin-tip",
+   "group": "all",
+   "check": {
+    "top": 18.03
+   },
+   "tol": 0.08
+  },
+  {
+   "id": "head",
+   "group": "head",
+   "check": {
+    "top": 17.55,
+    "bottom": 15.45,
+    "width": 1.72,
+    "depth": 2.65,
+    "centerZ": 0.6
+   },
+   "tol": 0.15,
+   "widthAtY": 16.45
+  },
+  {
+   "id": "shoulder-armor-L",
+   "group": "shoulder:+",
+   "check": {
+    "top": 16.0,
+    "bottom": 13.85,
+    "width": 2.47,
+    "outerX": 4.3,
+    "depth": 1.6
+   },
+   "tol": 0.15,
+   "widthAtY": 15.0
+  },
+  {
+   "id": "chest",
+   "group": "chest",
+   "check": {
+    "top": 15.6,
+    "bottom": 12.7,
+    "width": 3.55,
+    "front": 2.66
+   },
+   "tol": 0.15,
+   "widthAtY": 14.2
+  },
+  {
+   "id": "upper-arm-L",
+   "group": "arm@shoulder:+",
+   "check": {
+    "width": 1.14
+   },
+   "tol": 0.12,
+   "widthAtY": 13.2
+  },
+  {
+   "id": "forearm-L",
+   "group": "arm@elbow:+",
+   "check": {
+    "bottom": 10.25,
+    "width": 1.46
+   },
+   "tol": 0.15,
+   "widthAtY": 11.0
+  },
+  {
+   "id": "hand-L",
+   "group": "@wrist:+",
+   "check": {
+    "bottom": 8.1
+   },
+   "tol": 0.2
+  },
+  {
+   "id": "front-skirts",
+   "group": "skirt-front",
+   "check": {
+    "bottom": 9.1,
+    "front": 2.47
+   },
+   "tol": 0.2
+  },
+  {
+   "id": "rear-skirt",
+   "group": "skirt-rear",
+   "check": {
+    "bottom": 9.0,
+    "back": -1.58
+   },
+   "tol": 0.2
+  },
+  {
+   "id": "knee-guard-L",
+   "group": "knee:+",
+   "check": {
+    "top": 8.6,
+    "bottom": 4.75,
+    "width": 2.1,
+    "centerX": 1.94,
+    "front": 1.9
+   },
+   "tol": 0.15,
+   "widthAtY": 6.8
+  },
+  {
+   "id": "shin-L",
+   "group": "leg@knee:+",
+   "check": {
+    "bottom": 3.0,
+    "width": 1.15
+   },
+   "tol": 0.15,
+   "widthAtY": 4.0
+  },
+  {
+   "id": "ankle-guard-foot-L",
+   "group": "foot:+",
+   "check": {
+    "top": 3.1,
+    "bottom": 0.0,
+    "width": 2.66,
+    "depth": 4.94,
+    "centerX": 3.0
+   },
+   "tol": 0.15,
+   "widthAtY": 2.3
+  },
+  {
+   "id": "backpack",
+   "group": "pack",
+   "check": {
+    "top": 15.8,
+    "bottom": 12.1,
+    "back": -1.65
+   },
+   "tol": 0.2
+  }
+ ]
+}

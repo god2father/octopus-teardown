@@ -1,0 +1,761 @@
+{
+ "targetName": "Freedom mecha (fan build, no wings)",
+ "sourceImage": "ref/front.png",
+ "preSpecAssessment": {
+  "objectClass": {
+   "primaryType": "humanoid bipedal mecha (mobile suit) in an A-pose, fan build without wings",
+   "primaryDomain": "hybrid",
+   "formLanguage": [
+    "geometric",
+    "hard-surface",
+    "chamfered planar facets",
+    "tapered lofted limb shells"
+   ],
+   "structureKind": [
+    "articulated figure",
+    "plated armour over an inner frame",
+    "bilateral symmetry"
+   ],
+   "motionPotential": [
+    "hinged limbs",
+    "rail-cannon pivot",
+    "exploded teardown",
+    "reactor hatch"
+   ],
+   "materialFamilies": [
+    "satin lacquer paint over plastic/metal",
+    "gunmetal frame metal",
+    "emissive eye",
+    "glass lens"
+   ],
+   "notes": "Measured on ref/front.png at 79 px/m (fin tip 18.03 m). See image-analysis.md for every dimension."
+  },
+  "complexity": {
+   "tier": "ultra-complex",
+   "scores": {
+    "silhouetteComplexity": 5,
+    "componentCount": 5,
+    "hierarchyDepth": 4,
+    "repetitionDensity": 4,
+    "materialLayerCount": 4,
+    "localDetailDensity": 5,
+    "occlusionRisk": 3,
+    "actionReadinessNeed": 5
+   },
+   "estimatedCounts": {
+    "macroComponents": 12,
+    "mesoComponents": 60,
+    "microFeatureGroups": 14,
+    "materialLayers": 8,
+    "repetitionSystems": 4
+   },
+   "reasoning": [
+    "about 12 macro assemblies (head, torso, waist, 2 arms, 2 legs, 2 rail cannons, backpack, skirts) with 4-6 meso plates each",
+    "mirrored limb pairs and bolt/slit/slat repetition systems",
+    "identity depends on proportion, plate outlines and colour blocking more than micro surface"
+   ]
+  },
+  "specDepthDecision": {
+   "requiredDepth": "ultra-complex",
+   "minimumComponentLevels": [
+    "macro",
+    "meso",
+    "micro"
+   ],
+   "needsRepetitionSystems": true,
+   "needsMaterialLocalOverrides": true,
+   "needsMultipleReviewViews": true,
+   "needsActionReadyHierarchy": true,
+   "rationale": "Choose simple/moderate/complex/ultra-complex from observed structure, not from a hardcoded domain."
+  },
+  "unknownsToResolveBeforeImplementation": [
+   "inner-frame shape under armour (occluded): approximate as gunmetal cylinders and joint drums",
+   "thigh top under skirts (hidden): continue the visible thigh shell upward",
+   "backpack top (unseen): flat navy top"
+  ],
+  "detailInventory": {
+   "scanMethod": "component-zones",
+   "targetMinDetails": 16,
+   "note": "Enumerate every identity-defining small detail before authoring the spec. Each detail must map to a component.localFeatures entry or material.localOverrides entry, never prose only. Use forge/stage1_intake/build_detail_inventory.py to scan zones.",
+   "details": [
+    {
+     "id": "vfin-four-blade",
+     "kind": "contour",
+     "description": "Four yellow V-fin blades: two long at ~33\u00b0 reaching x \u00b11.8 m at 17.9 m, two short near-vertical inner blades to the 18.03 m tip",
+     "region": {
+      "x": 0.38,
+      "y": 0.0,
+      "width": 0.3,
+      "height": 0.09,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "silhouette",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "head-vfin.blades"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c1.png",
+     "confidence": 0.9
+    },
+    {
+     "id": "crest-red-v",
+     "kind": "linework",
+     "description": "Red crest V from the forehead down to the eye line, 0.6 m wide at the top",
+     "region": {
+      "x": 0.5,
+      "y": 0.06,
+      "width": 0.07,
+      "height": 0.06,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "head-crest.v-plate"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c1.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "visor-v-eyes",
+     "kind": "contour",
+     "description": "White V visor over two amber emissive eyes, slanted outward",
+     "region": {
+      "x": 0.47,
+      "y": 0.1,
+      "width": 0.14,
+      "height": 0.04,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "silhouette+emissive",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "head-face.visor-eyes"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c1.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "cheek-slits",
+     "kind": "seam",
+     "description": "3-4 horizontal dark slits on each cheek guard",
+     "region": {
+      "x": 0.45,
+      "y": 0.12,
+      "width": 0.18,
+      "height": 0.05,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "normal",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "head-cheek.slits"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c1.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "forehead-camera",
+     "kind": "fastener",
+     "description": "Forehead camera housing with a blue lens on the crown",
+     "region": {
+      "x": 0.52,
+      "y": 0.04,
+      "width": 0.05,
+      "height": 0.03,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "albedo+gloss",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "head-camera.lens"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c1.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "chest-vents",
+     "kind": "seam",
+     "description": "Two separate framed vents, light grey frame ~0.13 m thick, dark interior, two slats; centres x \u00b11.14 m, h 14.2 m",
+     "region": {
+      "x": 0.4,
+      "y": 0.2,
+      "width": 0.28,
+      "height": 0.06,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "normal+albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "chest-pec.vent"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c1.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "chest-red-band",
+     "kind": "linework",
+     "description": "Red band at the prow front edge between the vents, h 14.6\u201314.4 m",
+     "region": {
+      "x": 0.5,
+      "y": 0.19,
+      "width": 0.08,
+      "height": 0.02,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "chest-prow.red-band"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c1.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "lower-chest-blue-v",
+     "kind": "contour",
+     "description": "Bright-blue lower chest panels slanting inward to the V tip at 12.75 m",
+     "region": {
+      "x": 0.43,
+      "y": 0.25,
+      "width": 0.22,
+      "height": 0.08,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "albedo+silhouette",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "chest-lower.blue-panels"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c1.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "shoulder-chevron",
+     "kind": "linework",
+     "description": "Red chevron at the upper outer corner of each shoulder armour block",
+     "region": {
+      "x": 0.2,
+      "y": 0.12,
+      "width": 0.12,
+      "height": 0.03,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "shoulder-armor.chevron"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c0.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "shoulder-blue-marker",
+     "kind": "linework",
+     "description": "Small blue marker on the outer face of each shoulder block",
+     "region": {
+      "x": 0.23,
+      "y": 0.15,
+      "width": 0.03,
+      "height": 0.04,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "shoulder-armor.marker"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c0.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "panel-lines",
+     "kind": "linework",
+     "description": "Engraved panel lines over every white plate, dark grey, about 2 cm wide",
+     "region": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "normal+ao",
+     "mapsTo": {
+      "type": "material.localOverrides",
+      "ref": "armor-white.panel-lines"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c1.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "hex-bolts",
+     "kind": "fastener",
+     "description": "Dark hex bolt heads at the plate corners, about 0.1 m",
+     "region": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "geometry",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "armor.bolts"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c1.png",
+     "confidence": 0.75
+    },
+    {
+     "id": "edge-wear",
+     "kind": "scratch",
+     "description": "Light edge scuffs and grey grime in the panel lines",
+     "region": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "roughness+albedo",
+     "mapsTo": {
+      "type": "material.localOverrides",
+      "ref": "armor-white.wear"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c1.png",
+     "confidence": 0.7
+    },
+    {
+     "id": "knee-slot",
+     "kind": "seam",
+     "description": "A dark vertical slot on the front of each knee guard",
+     "region": {
+      "x": 0.32,
+      "y": 0.64,
+      "width": 0.06,
+      "height": 0.06,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "normal",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "knee-guard.slot"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c0.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "knee-drum",
+     "kind": "fastener",
+     "description": "Gunmetal knee drums exposed at the sides of the knee",
+     "region": {
+      "x": 0.28,
+      "y": 0.55,
+      "width": 0.05,
+      "height": 0.05,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "geometry",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "knee-joint.drum"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c0.png",
+     "confidence": 0.7
+    },
+    {
+     "id": "foot-red-wedge",
+     "kind": "contour",
+     "description": "Red toe wedge and heel, white instep with a dark slot; toes splayed ~12\u00b0 outward",
+     "region": {
+      "x": 0.15,
+      "y": 0.88,
+      "width": 0.3,
+      "height": 0.12,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "silhouette+albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "foot.red-wedge"
+     },
+     "evidenceRef": "detail-inventory/zone-r2c0.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "rail-cannon-red-tip",
+     "kind": "linework",
+     "description": "Grey rail cannon with a red muzzle cap and a red marker near the hinge",
+     "region": {
+      "x": 0.2,
+      "y": 0.33,
+      "width": 0.1,
+      "height": 0.38,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "rail-cannon.tip"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c0.png",
+     "confidence": 0.85
+    },
+    {
+     "id": "skirt-red-markers",
+     "kind": "linework",
+     "description": "Small red markers on the front skirts and side skirts",
+     "region": {
+      "x": 0.33,
+      "y": 0.36,
+      "width": 0.34,
+      "height": 0.06,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "skirt.markers"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c1.png",
+     "confidence": 0.8
+    },
+    {
+     "id": "forearm-dark-block",
+     "kind": "seam",
+     "description": "Gunmetal elbow block and dark recess on the outer upper arm",
+     "region": {
+      "x": 0.22,
+      "y": 0.26,
+      "width": 0.08,
+      "height": 0.06,
+      "units": "normalized"
+     },
+     "scale": "micro",
+     "affects": "albedo",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "arm.elbow-block"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c0.png",
+     "confidence": 0.8
+    },
+    {
+     "id": "hands-open",
+     "kind": "contour",
+     "description": "Gunmetal open hands, four three-segment fingers plus thumb",
+     "region": {
+      "x": 0.1,
+      "y": 0.42,
+      "width": 0.12,
+      "height": 0.14,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "silhouette",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "hand.fingers"
+     },
+     "evidenceRef": "detail-inventory/zone-r1c0.png",
+     "confidence": 0.8
+    },
+    {
+     "id": "pack-ports",
+     "kind": "fastener",
+     "description": "Backpack: two hex-mounted thruster ports and a slatted centre vent (back view)",
+     "region": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0,
+      "units": "normalized"
+     },
+     "scale": "meso",
+     "affects": "geometry",
+     "mapsTo": {
+      "type": "component.localFeatures",
+      "ref": "backpack.ports"
+     },
+     "evidenceRef": "detail-inventory/zone-r0c1.png",
+     "confidence": 0.75
+    }
+   ]
+  },
+  "anatomy": {
+   "applies": true,
+   "styleHeads": 7.8,
+   "proportions": {
+    "headUnit": 2.3,
+    "torso": 3.9,
+    "legs": 9.3,
+    "shoulderWidth": 8.6,
+    "hipWidth": 2.7
+   },
+   "pose": {
+    "type": "A-pose standing",
+    "jointAngles": {
+     "hipRoll": 16,
+     "hipPitch": 13,
+     "knee": 24,
+     "ankle": -11,
+     "shoulderRoll": 19,
+     "elbow": 14
+    }
+   },
+   "faceLandmarks": {
+    "eyeLine": 16.45,
+    "eyeSpacing": 0.5,
+    "noseBase": 0,
+    "mouthLine": 15.85,
+    "hairline": 0
+   },
+   "features": [
+    "V-fin",
+    "crest",
+    "V visor",
+    "amber eyes",
+    "mouthpiece",
+    "red chin",
+    "cheek slits"
+   ],
+   "confidence": 0.8,
+   "note": "Mechanical humanoid: landmarks measured on the grid, not extracted by MediaPipe (no human face)."
+  },
+  "sourceImage": "ref/front.png"
+ },
+ "qualityContract": {
+  "qualityBar": "ultra-complex",
+  "definitionOfDone": [
+   "The rendered model matches the reference silhouette, primary proportions, visible component hierarchy, material response, and most recognizable local features for the selected fidelity tier."
+  ],
+  "minimumSpecDepth": {
+   "macroComponents": 5,
+   "mesoComponents": 16,
+   "microFeatureGroups": 8,
+   "materialLayers": 4,
+   "repetitionSystems": 2,
+   "reviewViewpoints": 5
+  },
+  "featureGroups": [
+   {
+    "id": "overall-silhouette",
+    "name": "Overall silhouette and proportions",
+    "required": true,
+    "qualityCriteria": [
+     "Bounding shape, dominant curves, negative spaces, and scale relationships are explicitly described."
+    ],
+    "evidenceRefs": [
+     "full-object"
+    ],
+    "failureModes": [
+     "model reads as a generic placeholder instead of the reference object",
+     "major proportions are guessed without evidence"
+    ]
+   },
+   {
+    "id": "primary-structure",
+    "name": "Primary structure and hierarchy",
+    "required": true,
+    "qualityCriteria": [
+     "Major parts, joints, seams, contact points, and parent-child relationships are named before code generation."
+    ],
+    "evidenceRefs": [
+     "full-object"
+    ],
+    "failureModes": [
+     "large visible parts are merged into one mesh",
+     "component hierarchy is too shallow for the observed complexity"
+    ]
+   },
+   {
+    "id": "attachment-joint-correctness",
+    "name": "Attachment and joint correctness",
+    "required": true,
+    "qualityCriteria": [
+     "Every visible child appendage, branch, limb, handle, connector, tube, cable, horn, wing, leg, or hinged part has an attachment contract with parent socket, localStart/localEnd, contact type, embed/overlap, and gap tolerance."
+    ],
+    "evidenceRefs": [
+     "full-object"
+    ],
+    "failureModes": [
+     "child part root floats away from the parent",
+     "branch/limb/tube is centered in space instead of pivoting from its root",
+     "parent-child transform mixes world and local coordinates"
+    ]
+   },
+   {
+    "id": "surface-material-response",
+    "name": "Surface material response",
+    "required": true,
+    "qualityCriteria": [
+     "Albedo zones, roughness, normal/bump/displacement intent, cavity dirt, edge wear, and local overrides are specified where visible.",
+     "Important materials define independent albedo, roughness, height/normal, and AO responses instead of reusing one texture for unrelated PBR channels.",
+     "Surface response is decomposed into macro, meso, and micro frequency bands with scale and amplitude tied to object scale."
+    ],
+    "evidenceRefs": [
+     "full-object"
+    ],
+    "failureModes": [
+     "surface looks like flat plastic",
+     "local material variation is missing or not tied to image evidence"
+    ]
+   },
+   {
+    "id": "reference-lookdev",
+    "name": "Reference color, material, and lighting response",
+    "required": true,
+    "qualityCriteria": [
+     "Material-pass names the reference-derived albedo palette, roughness variation, tactile normal/bump/displacement response, and local masks.",
+     "When a source image is available, run reference PBR extraction and require confidence >= 0.7 before treating maps as implementation-ready.",
+     "Lighting-pass names key/fill/rim or environment light, exposure, tone mapping, background, and contact shadow behavior.",
+     "Neutral, grazing-angle, and reference-matched renders prove that surface relief survives relighting and is not painted into albedo."
+    ],
+    "evidenceRefs": [
+     "full-object"
+    ],
+    "failureModes": [
+     "model has acceptable shape but reads as flat shaded or plastic",
+     "colors are a generic average instead of reference-observed local color zones",
+     "lighting is evenly ambient and cannot reproduce the source value range"
+    ]
+   }
+  ],
+  "visualDeltaChecks": [
+   "head shield outline and fin angles",
+   "chest vents separated by the centre column",
+   "shoulder armour tilt and size",
+   "knee guard wider than thigh and shin",
+   "foot splay and red wedge",
+   "rail cannon splay and length"
+  ],
+  "antiShallowSpecRules": [
+   "Do not proceed to code if qualityContract.qualityBar is unassessed.",
+   "Do not proceed to code if the spec only contains a root component for a moderate or complex object.",
+   "Do not proceed to code if required featureGroups are not represented by componentTree, materials, or repetitionSystems.",
+   "Do not proceed to code if visible local features are described only in prose and not attached to components/materials/evidenceRefs.",
+   "Do not proceed past structural-pass if attached child parts lack attachment.parentSocket, localStart, localEnd, embedDepth/overlap, and gapTolerance.",
+   "Do not pass material look-dev when albedo is reused as roughness, height, normal, or AO.",
+   "Do not pass material look-dev without macro, meso, and micro surface frequency bands for close-up materials.",
+   "Do not pass reference-fidelity material look-dev from a source image without usable referencePbr maps or an explicit documented limitation.",
+   "Do not patch a spec with extracted PBR maps when extraction confidence is below the target threshold unless the user explicitly accepts lower fidelity.",
+   "Do not place adjacent separate-geometry parts below 0.02 world-unit seam overlap (source: grimoire/build/geometry_patterns.md).",
+   "Do not satisfy raised or recessed relief, fasteners, or grip structure with a map alone when the feature affects form; use geometry or displacement (source: grimoire/build/geometry_patterns.md)."
+  ]
+ },
+ "authoringInstruction": "Fill observed object class, complexity reasoning, featureGroups, visualDeltaChecks, and unknowns before generating or implementing ObjectSculptSpec.",
+ "localSpecSearch": {
+  "collection": "core_3d",
+  "query": "Freedom mecha (fan build, no wings) hard-surface robot armor plates humanoid mecha proportions chamfered panel lines bolts painted satin clearcoat mechanical joint pistons",
+  "index": {
+   "status": "rebuilt",
+   "reason": "missing",
+   "fingerprint": "62f2831e1d52eeb6dbb94a87c44fa25b1f4926626a7b1f8c2bcadc63e04e9471"
+  },
+  "matches": [
+   {
+    "record_id": "core.measurement-source-text",
+    "file_path": "grimoire/intake/image_analysis.md",
+    "heading": "Layer 2 \u2014 Overall form & silhouette",
+    "key_path": null,
+    "score": 5.268490296339,
+    "snippets": [
+     "Record proportions relative to a named reference dimension and keep observations separate from inference."
+    ],
+    "source_refs": [
+     {
+      "path": "grimoire/intake/image_analysis.md",
+      "heading": "Layer 2 \u2014 Overall form & silhouette",
+      "key_path": null
+     },
+     {
+      "path": "grimoire/intake/image_analysis.md",
+      "heading": "The Rule",
+      "key_path": null
+     }
+    ],
+    "evidence_refs": [
+     {
+      "kind": "source",
+      "ref": "grimoire/intake/image_analysis.md"
+     },
+     {
+      "kind": "notebooklm-research",
+      "ref": "notebooklm:4b03c2f9-8393-411f-b5b4-039ab9532843",
+      "note": "Validated generic schema vocabulary; numeric claims remain backed by local source_refs."
+     }
+    ]
+   },
+   {
+    "record_id": "core.topology-intent",
+    "file_path": "grimoire/glossary/3d_vocabulary.md",
+    "heading": "Geometry And Topology",
+    "key_path": null,
+    "score": 5.143858634031,
+    "snippets": [
+     "Topology intent classifies a surface as hard-surface blockout, subdivision-ready, low-poly prop, organic deformed mesh, or alpha-card cluster."
+    ],
+    "source_refs": [
+     {
+      "path": "grimoire/glossary/3d_vocabulary.md",
+      "heading": "Geometry And Topology",
+      "key_path": null
+     }
+    ],
+    "evidence_refs": [
+     {
+      "kind": "source",
+      "ref": "grimoire/glossary/3d_vocabulary.md"
+     },
+     {
+      "kind": "notebooklm-research",
+      "ref": "notebooklm:4b03c2f9-8393-411f-b5b4-039ab9532843",
+      "note": "Validated generic schema vocabulary; numeric claims remain backed by local source_refs."
+     }
+    ]
+   },
+   {
+    "record_id": "core.pbr-clearcoat",
+    "file_path": "docs/raw/img2threejs-skill-dataset.json",
+    "heading": null,
+    "key_path": "categories.material_pbr[4]",
+    "score": 4.908084468589,
+    "snippets": [
+     "Secondary reflective coating layer on top of the base material, simulating varnish, lacquer, or automotive paint. L\u1edbp ph\u1ee7 ph\u1ea3n x\u1ea1 th\u1ee9 c\u1ea5p n\u1eb1m tr\u00ean v\u1eadt li\u1ec7u n\u1ec1n, m\u00f4 ph\u1ecfng vecni, s\u01a1n m\u00e0i ho\u1eb7c s\u01a1n xe h\u01a1i. Recognition cues: A distinct, sharp ..."
+    ],
+    "source_refs": [
+     {
+      "path": "docs/raw/img2threejs-skill-dataset.json",
+      "heading": null,
+      "key_path": "categories.material_pbr[4]"
+     }
+    ],
+    "evidence_refs": [
+     {
+      "kind": "source",
+      "ref": "docs/raw/img2threejs-skill-dataset.json",
+      "note": "img2threejs NotebookLM research distillation"
+     }
+    ]
+   }
+  ]
+ }
+}

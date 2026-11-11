@@ -1,0 +1,9 @@
+# regenerable intake artefacts and per-run reports
+ref/
+detail-inventory/
+.img2threejs/
+size-gate-*.json
+probe.json
+admission.json
+suitability.json
+object-sculpt-spec.json

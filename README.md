@@ -47,3 +47,19 @@ DISPLAY：`L` 标注 · `E` 爆炸图 · `J` 尾流 · `T` 转台 · 空格暂�
 
 ASSEMBLIES：`1` HERO · `2` OPTICS · `3` WING（快拆右前翼）· `4` LEG L2 · `5` THORAX（开胸壳）· `6` ABDOMEN（拉开腹甲）
 DISPLAY：`L` 标注 · `E` 爆炸图 · `M` 运动模糊 · `T` 转台 · 空格暂停 · 拖拽环绕 · 滚轮缩放
+
+## 自由高达（个人同人，仅本地）
+
+致敬 ZGMF-X10A Freedom 的个人练习作品（无翼版），**不进 GitHub Pages、不公开分发**（`npm run pages` 不会复制它）。几何体全部由 three.js 代码生成，不含官方模型或标志；造型以 `reference/freedom/sheet.webp` 参考图为准。
+
+```bash
+npm run build:freedom   # → teardown-out/dist/freedom-live.html 与 freedom-film.html
+npm run open:freedom    # 打开交互页面
+npm run video:freedom   # 录 35 秒 60fps 影片并配乐 → teardown-out/freedom.mp4（需要 ffmpeg）
+node img2/freedom/size-gate.mjs   # 尺寸检查：38 项部件尺寸对照参考图（img2/freedom/targets.json）
+```
+
+尺寸检查按 img2threejs 的方法：在参考图上按 79 像素 = 1 米量出各部件的高度、截面宽度和前后位置，写进 `targets.json`；脚本读出模型每组部件的真实包围盒逐项比对，超出容差即不通过。
+
+ASSEMBLIES：`1` HERO · `2` HEAD（头部传感器）· `3` BACKPACK（背包推进器）· `4` REACTOR（开胸看反应堆）· `5` RAILGUN（电磁炮展开）· `6` RAIL FIRE（电磁炮充能齐射）
+DISPLAY：`L` 标注 · `P` 相转移装甲（灰 ↔ 彩）· `X` 透视（看能量线路）· `E` 爆炸图（先拆装甲、再拆骨架）· `T` 转台 · 空格暂停 · 拖拽环绕 · 滚轮缩放

@@ -1,0 +1,431 @@
+{
+ "sourceImage": "/Users/congt/workspace/octopus-teardown/img2/freedom/ref/front.png",
+ "zonesDir": "/Users/congt/workspace/octopus-teardown/img2/freedom/detail-inventory",
+ "detailInventory": {
+  "scanMethod": "grid-3x3",
+  "targetMinDetails": 16,
+  "details": [
+   {
+    "id": "vfin-four-blade",
+    "kind": "contour",
+    "description": "Four yellow V-fin blades: two long at ~33\u00b0 reaching x \u00b11.8 m at 17.9 m, two short near-vertical inner blades to the 18.03 m tip",
+    "region": {
+     "x": 0.38,
+     "y": 0.0,
+     "width": 0.3,
+     "height": 0.09,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "silhouette",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "head-vfin.blades"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c1.png",
+    "confidence": 0.9
+   },
+   {
+    "id": "crest-red-v",
+    "kind": "linework",
+    "description": "Red crest V from the forehead down to the eye line, 0.6 m wide at the top",
+    "region": {
+     "x": 0.5,
+     "y": 0.06,
+     "width": 0.07,
+     "height": 0.06,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "head-crest.v-plate"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c1.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "visor-v-eyes",
+    "kind": "contour",
+    "description": "White V visor over two amber emissive eyes, slanted outward",
+    "region": {
+     "x": 0.47,
+     "y": 0.1,
+     "width": 0.14,
+     "height": 0.04,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "silhouette+emissive",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "head-face.visor-eyes"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c1.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "cheek-slits",
+    "kind": "seam",
+    "description": "3-4 horizontal dark slits on each cheek guard",
+    "region": {
+     "x": 0.45,
+     "y": 0.12,
+     "width": 0.18,
+     "height": 0.05,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "normal",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "head-cheek.slits"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c1.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "forehead-camera",
+    "kind": "fastener",
+    "description": "Forehead camera housing with a blue lens on the crown",
+    "region": {
+     "x": 0.52,
+     "y": 0.04,
+     "width": 0.05,
+     "height": 0.03,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "albedo+gloss",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "head-camera.lens"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c1.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "chest-vents",
+    "kind": "seam",
+    "description": "Two separate framed vents, light grey frame ~0.13 m thick, dark interior, two slats; centres x \u00b11.14 m, h 14.2 m",
+    "region": {
+     "x": 0.4,
+     "y": 0.2,
+     "width": 0.28,
+     "height": 0.06,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "normal+albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "chest-pec.vent"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c1.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "chest-red-band",
+    "kind": "linework",
+    "description": "Red band at the prow front edge between the vents, h 14.6\u201314.4 m",
+    "region": {
+     "x": 0.5,
+     "y": 0.19,
+     "width": 0.08,
+     "height": 0.02,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "chest-prow.red-band"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c1.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "lower-chest-blue-v",
+    "kind": "contour",
+    "description": "Bright-blue lower chest panels slanting inward to the V tip at 12.75 m",
+    "region": {
+     "x": 0.43,
+     "y": 0.25,
+     "width": 0.22,
+     "height": 0.08,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "albedo+silhouette",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "chest-lower.blue-panels"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c1.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "shoulder-chevron",
+    "kind": "linework",
+    "description": "Red chevron at the upper outer corner of each shoulder armour block",
+    "region": {
+     "x": 0.2,
+     "y": 0.12,
+     "width": 0.12,
+     "height": 0.03,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "shoulder-armor.chevron"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c0.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "shoulder-blue-marker",
+    "kind": "linework",
+    "description": "Small blue marker on the outer face of each shoulder block",
+    "region": {
+     "x": 0.23,
+     "y": 0.15,
+     "width": 0.03,
+     "height": 0.04,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "shoulder-armor.marker"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c0.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "panel-lines",
+    "kind": "linework",
+    "description": "Engraved panel lines over every white plate, dark grey, about 2 cm wide",
+    "region": {
+     "x": 0.0,
+     "y": 0.0,
+     "width": 1.0,
+     "height": 1.0,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "normal+ao",
+    "mapsTo": {
+     "type": "material.localOverrides",
+     "ref": "armor-white.panel-lines"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c1.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "hex-bolts",
+    "kind": "fastener",
+    "description": "Dark hex bolt heads at the plate corners, about 0.1 m",
+    "region": {
+     "x": 0.0,
+     "y": 0.0,
+     "width": 1.0,
+     "height": 1.0,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "geometry",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "armor.bolts"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c1.png",
+    "confidence": 0.75
+   },
+   {
+    "id": "edge-wear",
+    "kind": "scratch",
+    "description": "Light edge scuffs and grey grime in the panel lines",
+    "region": {
+     "x": 0.0,
+     "y": 0.0,
+     "width": 1.0,
+     "height": 1.0,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "roughness+albedo",
+    "mapsTo": {
+     "type": "material.localOverrides",
+     "ref": "armor-white.wear"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c1.png",
+    "confidence": 0.7
+   },
+   {
+    "id": "knee-slot",
+    "kind": "seam",
+    "description": "A dark vertical slot on the front of each knee guard",
+    "region": {
+     "x": 0.32,
+     "y": 0.64,
+     "width": 0.06,
+     "height": 0.06,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "normal",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "knee-guard.slot"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c0.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "knee-drum",
+    "kind": "fastener",
+    "description": "Gunmetal knee drums exposed at the sides of the knee",
+    "region": {
+     "x": 0.28,
+     "y": 0.55,
+     "width": 0.05,
+     "height": 0.05,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "geometry",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "knee-joint.drum"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c0.png",
+    "confidence": 0.7
+   },
+   {
+    "id": "foot-red-wedge",
+    "kind": "contour",
+    "description": "Red toe wedge and heel, white instep with a dark slot; toes splayed ~12\u00b0 outward",
+    "region": {
+     "x": 0.15,
+     "y": 0.88,
+     "width": 0.3,
+     "height": 0.12,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "silhouette+albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "foot.red-wedge"
+    },
+    "evidenceRef": "detail-inventory/zone-r2c0.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "rail-cannon-red-tip",
+    "kind": "linework",
+    "description": "Grey rail cannon with a red muzzle cap and a red marker near the hinge",
+    "region": {
+     "x": 0.2,
+     "y": 0.33,
+     "width": 0.1,
+     "height": 0.38,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "rail-cannon.tip"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c0.png",
+    "confidence": 0.85
+   },
+   {
+    "id": "skirt-red-markers",
+    "kind": "linework",
+    "description": "Small red markers on the front skirts and side skirts",
+    "region": {
+     "x": 0.33,
+     "y": 0.36,
+     "width": 0.34,
+     "height": 0.06,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "skirt.markers"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c1.png",
+    "confidence": 0.8
+   },
+   {
+    "id": "forearm-dark-block",
+    "kind": "seam",
+    "description": "Gunmetal elbow block and dark recess on the outer upper arm",
+    "region": {
+     "x": 0.22,
+     "y": 0.26,
+     "width": 0.08,
+     "height": 0.06,
+     "units": "normalized"
+    },
+    "scale": "micro",
+    "affects": "albedo",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "arm.elbow-block"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c0.png",
+    "confidence": 0.8
+   },
+   {
+    "id": "hands-open",
+    "kind": "contour",
+    "description": "Gunmetal open hands, four three-segment fingers plus thumb",
+    "region": {
+     "x": 0.1,
+     "y": 0.42,
+     "width": 0.12,
+     "height": 0.14,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "silhouette",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "hand.fingers"
+    },
+    "evidenceRef": "detail-inventory/zone-r1c0.png",
+    "confidence": 0.8
+   },
+   {
+    "id": "pack-ports",
+    "kind": "fastener",
+    "description": "Backpack: two hex-mounted thruster ports and a slatted centre vent (back view)",
+    "region": {
+     "x": 0.0,
+     "y": 0.0,
+     "width": 1.0,
+     "height": 1.0,
+     "units": "normalized"
+    },
+    "scale": "meso",
+    "affects": "geometry",
+    "mapsTo": {
+     "type": "component.localFeatures",
+     "ref": "backpack.ports"
+    },
+    "evidenceRef": "detail-inventory/zone-r0c1.png",
+    "confidence": 0.75
+   }
+  ]
+ },
+ "authoringInstruction": "Open each zone crop under zonesDir and replace every detail stub's kind, description, scale, affects, mapsTo, and confidence with what is actually observed. Add more detail entries per zone if a single zone contains multiple distinct marks; do not leave stubs unfilled or unlinked (mapsTo must reference a real component.localFeatures or material.localOverrides entry)."
+}

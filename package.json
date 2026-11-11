@@ -9,6 +9,9 @@
     "beats": "node .claude/skills/teardown/sims/capture.mjs octopus-film --size 1600x900 --dpr 1.2 --stills beats --timeline sims/octopus-film/timeline.json --cols 3 --out teardown-out/octopus-beats.png",
     "video": "node .claude/skills/teardown/sims/capture.mjs octopus-film --size 1600x900 --dpr 1.2 --out teardown-out/octopus-silent.mp4",
     "pages": "npm run build && mkdir -p docs && cp teardown-out/dist/octopus-live.html docs/index.html && cp teardown-out/dist/octopus-film.html docs/film.html && cp teardown-out/dist/bee-live.html docs/bee.html && cp teardown-out/dist/bee-film.html docs/bee-film.html && touch docs/.nojekyll",
-    "open:bee": "open teardown-out/dist/bee-live.html"
+    "open:bee": "open teardown-out/dist/bee-live.html",
+    "build:freedom": "node .claude/skills/teardown/sims/build.mjs ./sims/freedom-live ./sims/freedom-film",
+    "open:freedom": "open teardown-out/dist/freedom-live.html",
+    "video:freedom": "node .claude/skills/teardown/sims/capture.mjs freedom-film --size 1600x900 --dpr 1.2 --out teardown-out/freedom-silent.mp4 && python3 .claude/skills/teardown/run_sfx.py sims/freedom-shared/score.py && ffmpeg -y -i teardown-out/freedom-silent.mp4 -i teardown-out/freedom-score.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 256k -shortest -movflags +faststart teardown-out/freedom.mp4"
   }
 }
