@@ -7,3 +7,5 @@ probe.json
 admission.json
 suitability.json
 object-sculpt-spec.json
+proj/*.png
+proj/*.json

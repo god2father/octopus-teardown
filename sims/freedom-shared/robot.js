@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import {rng} from 'teardown-kit/util.js';
 import {machineAt, poseAt, SPEC} from './kin.js';
+import {HEAD_FRONT, HEAD_SIDE} from './headTex.js';
 
 const V3 = THREE.Vector3;
 const PI = Math.PI;
@@ -339,7 +340,7 @@ export function buildFreedom() {
     m.rotation.set(...rot);
     if (opt.edges !== false) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, opt.edgeAngle ?? 32), ink));
     parent.add(m);
-    if (PAINTS.includes(key)) armorMeshes.push({mesh: m, key});
+    if (PAINTS.includes(key)) armorMeshes.push({mesh: m, key, mat: m.material});
     if (opt.reg !== false) parts.push({o: m, asm, home: {p: m.position.clone(), q: m.quaternion.clone()}, dist: opt.dist ?? 1.0, dir: null, spin: new V3(R() - 0.5, R() - 0.5, R() - 0.5).normalize(), ang: (opt.spin ?? 0.5) * (R() - 0.5) * 2, delay: R(), iso: new V3()});
     return m;
   };
@@ -625,7 +626,7 @@ export function buildFreedom() {
 
   // ============================================================ head: 1.8 m tall and wide, 2.2 m front to back
   const neck = node(waist, [0, SPEC.neckY, 0.75], 'neck');
-  frame(cyl(0.4, 0.46, 0.95, 16), neck, [0, 0.15, 0], [0, 0, 0], M.joint); // the neck, visible between the chin and the collar plate
+  frame(cyl(0.3, 0.36, 0.95, 16), neck, [0, 0.15, -0.1], [0, 0, 0], M.pocket); // the neck, a dark recess between the chin and the collar plate
   for (let k = 0; k < 2; k++) frame(cyl(0.5, 0.5, 0.09, 18), neck, [0, -0.25 + k * 0.15, 0], [0, 0, 0], M.frame); // neck rings, under the collar
   for (const s of [-1, 1]) frame(cyl(0.07, 0.07, 0.8, 8), neck, [s * 0.36, 0.1, -0.22], [0, 0, s * 0.15], M.steel); // neck pistons
   // Head, measured on the reference front view at 79 px/m: a tall shield, not a box. Eye line at 16.45 m (local y 0);
@@ -644,6 +645,11 @@ export function buildFreedom() {
     g.computeVertexNormals();
     armor(g, 'white', head, [0, 0.42, -0.25], [0, 0, 0], 'head', {dist: 1.4});
   }
+  // the solid inside: a gunmetal skull block filling the dome, and the white lower back of the head closing it
+  // between the side guards, so the helmet never reads as an empty shell from behind or below
+  frame(rbox(1.3, 1.1, 1.9, 0.12), head, [0, 0.15, -0.25], [0, 0, 0], M.frame);
+  armor(prism([[-0.62, 0.15], [0.62, 0.15], [0.6, -0.35], [0.36, -0.7], [-0.36, -0.7], [-0.6, -0.35]], 1.0, 0.08), 'white', head, [0, 0, -0.85], [0, 0, 0], 'head', {dist: 1.3}); // lower back of the head
+  frame(rbox(1.2, 0.12, 1.5, 0.03), head, [0, -0.62, -0.35], [0, 0, 0], M.joint); // underside plate over the neck
   armor(rbox(0.16, 0.1, 1.1, 0.03), 'white', head, [0, 1.2, -0.2], [0.12, 0, 0], 'head', {reg: false}); // crown ridge
   armor(rbox(0.8, 0.5, 0.3, 0.08), 'white', head, [0, 0.3, -1.12], [0, 0, 0], 'head', {dist: 1.3}); // occiput
   frame(rbox(0.3, 0.18, 0.06, 0.02), head, [0, 0.3, -1.29], [0, 0, 0], M.lens); // rear sensor
@@ -659,6 +665,7 @@ export function buildFreedom() {
   armor(prism([[-0.1, -0.42], [0.1, -0.42], [0.1, -0.62], [0.05, -0.74], [-0.05, -0.74], [-0.1, -0.62]], 0.24, 0.04), 'red', head, [0, 0, 0.66], [0.22, 0, 0], 'head', {dist: 1.2}); // chin
   // the red crest: a shield pointing down between the eyes, its top leaning back
   armor(prism([[-0.18, 0.56], [0.18, 0.56], [0.18, 0.18], [0, -0.1], [-0.18, 0.18]], 0.3, 0.03), 'red', head, [0, 0, 1.04], [-0.38, 0, 0], 'head', {dist: 1.4});
+  for (const bx of [-0.1, 0.1]) frame(cylZ(0.03, 0.04, 10), head, [bx, 0.2, 1.13], [-0.38, 0, 0], M.pocket);
   const eyes = [];
   for (const s of [-1, 1]) {
     const brow = node(head, [s * 0.14, 0, 0.86]);
@@ -673,10 +680,14 @@ export function buildFreedom() {
     armor(hull([[0.68, 0.3], [0.76, 0.0], [0.6, -0.4], [0.32, -0.66], [-0.2, -0.58], [-0.4, -0.1], [-0.35, 0.3]], 0.34, 0.05), 'white', sideG, [0, 0, 0], [0, 0, 0], 'head', {dist: 1.5});
     // five angled vent slats on its front-outer face, in a dark recess
     frame(rbox(0.3, 0.62, 0.06, 0.02), head, [s * 0.62, -0.08, 0.79], [0, 0, -s * 0.16], M.pocket);
-    for (let k = 0; k < 4; k++) frame(rbox(0.04, 0.05, 0.38, 0.01), head, [s * (0.88 - k * 0.025), 0.08 - k * 0.12, 0.3], [0, 0, -s * 0.16], M.pocket); // side slits behind the eye
+    frame(rbox(0.03, 0.5, 0.42, 0.02), head, [s * 0.86, -0.1, 0.28], [0, 0, -s * 0.16], M.pocket); // side vent recess behind the eye
+    for (let k = 0; k < 4; k++) frame(rbox(0.05, 0.05, 0.36, 0.01), head, [s * (0.88 - k * 0.02), 0.08 - k * 0.12, 0.28], [0.45, 0, -s * 0.16], M.frame); // its angled slats
     for (let k = 0; k < 5; k++) frame(rbox(0.24, 0.045, 0.06, 0.01), head, [s * (0.63 - k * 0.03), 0.14 - k * 0.11, 0.82], [0, 0, s * 0.4], M.frame);
+    const tp = node(head, [0, 0, 0.42]);
+    tp.rotation.y = -s * 0.32;
+    armor(prism([[s * 0.24, 0.98], [s * 0.6, 0.72], [s * 0.72, 0.56], [s * 0.6, 0.54], [s * 0.22, 0.8]], 0.36, 0.04), 'white', tp, [0, 0, 0], [0, 0, 0], 'head', {dist: 1.4}); // temple plate
     // temple sensor: a dark disc in a ring on the dome
-    const ts = node(head, [s * 0.55, 0.38, 0.62]);
+    const ts = node(head, [s * 0.56, 0.36, 0.66]);
     ts.rotation.y = s * 0.7;
     frame(cylZ(0.09, 0.06, 16), ts, [0, 0, 0], [0, 0, 0], M.pocket);
     frame(new THREE.TorusGeometry(0.09, 0.025, 6, 18), ts, [0, 0, 0.02], [0, 0, 0], M.steel);
@@ -686,6 +697,69 @@ export function buildFreedom() {
     // V-fins, swept back about 30 degrees: the long blade to the side, the short one nearly vertical to 18.03 m
     armor(prism([[s * 0.0, -0.16], [s * 1.68, 1.53], [s * 1.64, 1.6], [s * 0.0, 0.2]], 0.1, 0.02), 'yellow', head, [s * 0.12, 0.42, 0.98], [-0.55, 0, 0], 'vfin', {dist: 1.6});
     armor(prism([[s * 0.0, -0.06], [s * 0.2, 1.52], [s * 0.13, 1.54], [s * -0.06, 0.06]], 0.07, 0.015), 'yellow', head, [s * 0.2, 0.5, 0.95], [-0.55, 0, 0], 'vfin', {dist: 1.6});
+  }
+  // ---------------------------------------------------------------- reference projection onto the head
+  // The reference's own pixels on the head (img2threejs projection-first fidelity): every head mesh gets a clone
+  // of its material that samples the de-lit front close-up on forward-facing surfaces and the side view on lateral
+  // ones, through the mesh's rest transform in head space, so the paint stays on each piece when it flies off.
+  const projected = [];
+  {
+    const loadTex = (src) => {
+      const img = new Image();
+      const t = new THREE.Texture(img);
+      img.onload = () => (t.needsUpdate = true);
+      img.src = src;
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+      return t;
+    };
+    const PU = {uFront: {value: loadTex(HEAD_FRONT)}, uSide: {value: loadTex(HEAD_SIDE)}, uF: {value: new THREE.Vector4(0.5, 259 / 724, 1 - 380 / 600, 259 / 600)}, uS: {value: new THREE.Vector4((160 - 0.86 * 158) / 480, 158 / 480, 1 - 296 / 480, 158 / 480)}, uPs: {value: 1}, uProj: {value: 1}};
+    head.updateWorldMatrix(true, true);
+    const inv = new THREE.Matrix4().copy(head.matrixWorld).invert();
+    const patch = (src, rest) => {
+      const m = src.clone();
+      const own = {uRest: {value: rest}};
+      m.onBeforeCompile = (sh) => {
+        Object.assign(sh.uniforms, PU, own);
+        sh.vertexShader = sh.vertexShader
+          .replace('#include <common>', '#include <common>\nuniform mat4 uRest; varying vec3 vHL; varying vec3 vHN;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHL = (uRest * vec4(position, 1.0)).xyz; vHN = normalize(mat3(uRest) * normal);');
+        sh.fragmentShader = sh.fragmentShader
+          .replace('#include <common>', '#include <common>\nuniform sampler2D uFront; uniform sampler2D uSide; uniform vec4 uF; uniform vec4 uS; uniform float uPs; uniform float uProj; varying vec3 vHL; varying vec3 vHN;')
+          .replace('#include <map_fragment>', `#include <map_fragment>
+            {
+              vec3 hn = normalize(vHN);
+              vec2 uvF = vec2(uF.x + vHL.x * uF.y, uF.z + vHL.y * uF.w);
+              vec2 uvS = vec2(uS.x + vHL.z * uS.y, uS.z + vHL.y * uS.w);
+              float inF = step(0.0, uvF.x) * step(uvF.x, 1.0) * step(0.0, uvF.y) * step(uvF.y, 1.0);
+              float inS = step(0.0, uvS.x) * step(uvS.x, 1.0) * step(0.0, uvS.y) * step(uvS.y, 1.0);
+              float wF = smoothstep(0.05, 0.45, hn.z) * inF;
+              float wS = smoothstep(0.3, 0.75, abs(hn.x)) * inS * (1.0 - wF);
+              vec3 tF = texture2D(uFront, uvF).rgb;
+              // the reference's painted fins belong to the 3D fins, not the helmet: drop saturated yellow above the eyes
+              float yel = smoothstep(0.18, 0.35, min(tF.r, tF.g) - tF.b) * smoothstep(0.12, 0.22, vHL.y);
+              wF *= 1.0 - yel;
+              vec3 tS = texture2D(uSide, uvS).rgb;
+              vec3 g = vec3(0.3, 0.59, 0.11);
+              tF = mix(vec3(dot(tF, g)) * 0.62, tF, uPs);
+              tS = mix(vec3(dot(tS, g)) * 0.62, tS, uPs);
+              diffuseColor.rgb = mix(diffuseColor.rgb, tF, wF * uProj);
+            }`);
+      };
+      m.customProgramCacheKey = () => 'headproj-' + src.type;
+      return m;
+    };
+    head.traverse((o) => {
+      if (!o.isMesh || !(o.material.isMeshStandardMaterial) || o.userData.asm === 'vfin') return;
+      const rest = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld);
+      const src = o.material;
+      o.material = patch(src, rest);
+      projected.push({mat: o.material, src});
+      const a = armorMeshes.find((x) => x.mesh === o);
+      if (a) a.mat = o.material;
+    });
+    projected.PU = PU;
+    for (const e of eyes) e.visible = false; // the projected eyes carry the reference's own glow
   }
   powerLine(neck, [0, -0.2, 0], [0, 0.7, 0], 0.05);
 
@@ -927,11 +1001,17 @@ export function buildFreedom() {
       M[k].roughness = BASE[k].r + 0.06 * (1 - ps);
       GLASS[k].color.copy(M[k].color);
     }
+    for (const P of projected) {
+      P.mat.color.copy(P.src.color);
+      P.mat.metalness = P.src.metalness;
+      P.mat.roughness = P.src.roughness;
+    }
+    projected.PU.uPs.value = ps;
     const xr = ops.xray ?? 0;
     const glass = xr > 0.02;
     if (glass !== glassOn) {
       glassOn = glass;
-      for (const a of armorMeshes) a.mesh.material = glass ? GLASS[a.key] : M[a.key];
+      for (const a of armorMeshes) a.mesh.material = glass ? GLASS[a.key] : a.mat;
     }
     for (const k of PAINTS) GLASS[k].opacity = 1 - 0.9 * xr;
     ink.opacity = 0.28 - 0.05 * xr;
