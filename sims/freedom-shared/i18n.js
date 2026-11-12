@@ -189,7 +189,8 @@ export function zh(en) {
   if (cache.has(en)) return cache.get(en);
   let out = en;
   for (const [re, z] of RX) out = out.replace(re, z);
-  out = /[一-鿿]/.test(out) ? out : '';
+  // keep only the ' · ' segments that were translated, so a half-known label does not repeat its English
+  out = out.split(' · ').filter((seg) => /[一-鿿]/.test(seg)).join(' · ');
   cache.set(en, out);
   return out;
 }

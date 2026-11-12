@@ -1,5 +1,5 @@
 {
- "_about": "Target sizes read off the reference sheet at 79 px/m (ref grid crops of the front and right-side views, fin tip 18.03 m). Metres. x lateral (+ = suit's left), y up from the sole, z forward from the shoulder line. Each target names a group of meshes and the bounds to check; tol is the allowed error in metres.",
+ "_about": "Target sizes read off the reference sheet at 79 px/m (ref grid crops of the front and right-side views, fin tip 18.03 m). Metres. x lateral (+ = suit's left), y up from the sole, z forward from the shoulder line. Each target names a group of meshes and the bounds to check; tol is the allowed error in metres. 2026-11-12 re-measure on a centred front crop: shoulder slice at 15.0 m is 2.1 m (inner 1.94, blue marker 3.95), ankle guard slice at 2.3 m is 2.8 m including the 12 degree toe-out; upper-arm slice moved to 13.6 m because the elbow block sits at 13.1 m.",
  "targets": [
   {
    "id": "fin-tip",
@@ -28,7 +28,7 @@
    "check": {
     "top": 16.0,
     "bottom": 13.85,
-    "width": 2.47,
+    "width": 2.1,
     "outerX": 4.3,
     "depth": 1.6
    },
@@ -54,7 +54,7 @@
     "width": 1.14
    },
    "tol": 0.12,
-   "widthAtY": 13.2
+   "widthAtY": 13.6
   },
   {
    "id": "forearm-L",
@@ -70,7 +70,7 @@
    "id": "hand-L",
    "group": "@wrist:+",
    "check": {
-    "bottom": 8.1
+    "bottom": 8.3
    },
    "tol": 0.2
   },
@@ -121,7 +121,7 @@
    "check": {
     "top": 3.1,
     "bottom": 0.0,
-    "width": 2.66,
+    "width": 2.7,
     "depth": 4.94,
     "centerX": 3.0
    },

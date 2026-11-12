@@ -32,12 +32,13 @@ const CSS = `
 .big{font-family:Inter,sans-serif;font-weight:500;letter-spacing:-.5px}
 .bt{position:absolute;height:22px;padding:0 10px;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;letter-spacing:1.2px;border:1px solid rgba(40,36,30,.2);border-radius:3px;background:rgba(255,255,255,.7);color:${C.dark};white-space:nowrap}
 .pill{display:inline-flex;align-items:center;justify-content:center;height:13px;padding:0 6px;font-size:7px;font-weight:700;letter-spacing:1px;border-radius:2px;color:#fff;background:${C.green};white-space:nowrap}
-.call{position:absolute;white-space:nowrap;background:rgba(251,250,248,.82);padding:2px 5px;border-radius:2px}
-.call b{display:block;font-size:8.5px;font-weight:700;letter-spacing:1.3px;color:${C.ink}}
-.call span{display:block;font-size:7.2px;letter-spacing:1px;color:${C.mute};margin-top:2px}
+.call{position:absolute;white-space:nowrap;background:#fff;padding:6px 10px 7px;border-radius:3px;border:1px solid rgba(40,36,30,.2);box-shadow:0 3px 10px rgba(40,30,20,.16)}
+.call b{display:block;font-size:12.5px;font-weight:700;letter-spacing:.9px;color:${C.ink};line-height:1.15}
+.call>span{display:block;font-size:10px;font-weight:600;letter-spacing:.7px;color:#57534c;margin-top:4px;line-height:1.15}
 .zh{font-family:${ZHF};letter-spacing:.4px;margin-left:.5em;text-transform:none;font-size:1.12em}
 .lb .zh{font-weight:500}
-.call span .zh{font-size:1.2em}
+.call span .zh{font-size:1.1em}
+.call b .zh{font-weight:600}
 .cur{position:absolute;left:0;top:0;z-index:50;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
 .ring{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:1.6px solid ${C.accent};opacity:0;z-index:49}
 `;
@@ -336,8 +337,10 @@ export function createConsole(app) {
         const lx = ax + c.dx;
         const ly = ay + c.dy;
         const ex = lx + (c.dx < 0 ? -18 : 18);
-        lh += `<g opacity="${c.o.toFixed(2)}"><polyline points="${ax.toFixed(1)},${ay.toFixed(1)} ${lx.toFixed(1)},${ly.toFixed(1)} ${ex.toFixed(1)},${ly.toFixed(1)}" fill="none" stroke="${C.accent}" stroke-width=".9"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="2.4" fill="${C.accent}"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="5" fill="none" stroke="${C.accent}" stroke-width=".6"/></g>`;
-        ch += `<div class="call" style="left:${(ex + (c.dx < 0 ? -4 : 4)).toFixed(1)}px;top:${(ly - 8).toFixed(1)}px;opacity:${c.o.toFixed(2)};transform:translateX(${c.dx < 0 ? '-100%' : '0'});text-align:${c.dx < 0 ? 'right' : 'left'}"><b>${bi(c.name)}</b><span>${bi(c.sub)}</span></div>`;
+        const pts = `${ax.toFixed(1)},${ay.toFixed(1)} ${lx.toFixed(1)},${ly.toFixed(1)} ${ex.toFixed(1)},${ly.toFixed(1)}`;
+        // a white halo under the leader and the anchor so they read over any armor colour
+        lh += `<g opacity="${c.o.toFixed(2)}"><polyline points="${pts}" fill="none" stroke="#fff" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/><polyline points="${pts}" fill="none" stroke="${C.accent}" stroke-width="1.8" stroke-linejoin="round"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="6.5" fill="#fff"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="4" fill="${C.accent}"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="9" fill="none" stroke="${C.accent}" stroke-width="1.2"/></g>`;
+        ch += `<div class="call" style="left:${ex.toFixed(1)}px;top:${ly.toFixed(1)}px;opacity:${c.o.toFixed(2)};transform:translate(${c.dx < 0 ? '-100%' : '0'},-50%);text-align:${c.dx < 0 ? 'right' : 'left'};border-${c.dx < 0 ? 'right' : 'left'}:3px solid ${C.accent}"><b>${bi(c.name)}</b><span>${bi(c.sub)}</span></div>`;
       }
       callSvg.innerHTML = lh;
       callG.innerHTML = ch;

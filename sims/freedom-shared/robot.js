@@ -7,11 +7,10 @@
 import * as THREE from 'three';
 import {rng} from 'teardown-kit/util.js';
 import {machineAt, poseAt, SPEC} from './kin.js';
-import {HEAD_FRONT, HEAD_SIDE} from './headTex.js';
 
 const V3 = THREE.Vector3;
 const PI = Math.PI;
-export const COLORS = {white: '#d9dadc', grey: '#b4b7bb', navy: '#2b335c', blue: '#2e54b6', red: '#c3232c', yellow: '#e2b21f', dark: '#3a3d43', frame: '#55595f', ink: '#22252b'};
+export const COLORS = {white: '#d9dadc', grey: '#b4b7bb', navy: '#5a607e', blue: '#3a5fc0', red: '#c3232c', yellow: '#e2b21f', dark: '#3a3d43', frame: '#55595f', ink: '#22252b'};
 const PS_OFF = {white: '#83868b', grey: '#6f7277', navy: '#5d6066', blue: '#686b71', red: '#5c5f64', yellow: '#76797e', dark: '#3a3d42'};
 
 const ss = (a, b, x) => {
@@ -51,6 +50,144 @@ function prism(pts, depth, bevel = 0.03) {
   g.translate(0, 0, -(depth - 2 * bevel) / 2);
   g.computeVertexNormals();
   return g;
+}
+/** a faceted solid skinned over rings of [x, y, z] points (the same count in each), capped at both ends, wound outward */
+function loft(rings, capA = true, capB = true) {
+  const pos = [];
+  const cen = rings.map((r) => r.reduce((a, p) => [a[0] + p[0] / r.length, a[1] + p[1] / r.length, a[2] + p[2] / r.length], [0, 0, 0]));
+  const tri = (a, b, c, o) => {
+    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    const v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const m = [(a[0] + b[0] + c[0]) / 3 - o[0], (a[1] + b[1] + c[1]) / 3 - o[1], (a[2] + b[2] + c[2]) / 3 - o[2]];
+    if (n[0] * m[0] + n[1] * m[1] + n[2] * m[2] < 0) pos.push(...a, ...c, ...b);
+    else pos.push(...a, ...b, ...c);
+  };
+  for (let i = 0; i < rings.length - 1; i++) {
+    const A = rings[i];
+    const B = rings[i + 1];
+    const o = cen[i].map((x, k) => (x + cen[i + 1][k]) / 2);
+    for (let k = 0; k < A.length; k++) {
+      const k2 = (k + 1) % A.length;
+      tri(A[k], A[k2], B[k2], o);
+      tri(A[k], B[k2], B[k], o);
+    }
+  }
+  const cap = (r, c, o) => {
+    for (let k = 0; k < r.length; k++) tri(c, r[k], r[(k + 1) % r.length], o);
+  };
+  if (capA) cap(rings[0], cen[0], cen[1]);
+  if (capB) cap(rings[rings.length - 1], cen[rings.length - 1], cen[rings.length - 2]);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+/** a rounded shell over rings of [x, y, z] points: every ring's corners are cut (Chaikin, `round` passes), the rings are
+ * resampled along the loft (Catmull-Rom, `sub` steps a span) and the skin is shaded smooth; the end caps stay flat.
+ * `fnormal` keeps the face normals so the panel texture still maps per face. */
+function smoothLoft(rings0, sub = 3, round = 2, capA = true, capB = true, cut = 0) {
+  // cut > 0: corners are cut back by that many metres (a bevel) instead of a quarter of each edge
+  const chaikin = (r) => r.flatMap((p, i) => {
+    const q = r[(i + 1) % r.length];
+    const f = cut ? Math.min(0.33, cut / (Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]) || 1)) : 0.25;
+    return [p.map((v, k) => (1 - f) * v + f * q[k]), p.map((v, k) => f * v + (1 - f) * q[k])];
+  });
+  let R = rings0;
+  for (let i = 0; i < round; i++) R = R.map(chaikin);
+  const m = R.length;
+  const cr = (a, b, c, d, t) => 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t);
+  const P = [];
+  for (let i = 0; i < m - 1; i++)
+    for (let j = 0; j < sub; j++) P.push(R[i].map((_, k) => [0, 1, 2].map((ax) => cr(R[Math.max(i - 1, 0)][k][ax], R[i][k][ax], R[i + 1][k][ax], R[Math.min(i + 2, m - 1)][k][ax], j / sub))));
+  P.push(R[m - 1]);
+  const n = P[0].length;
+  const cen = P.map((r) => r.reduce((a, q) => [a[0] + q[0] / n, a[1] + q[1] / n, a[2] + q[2] / n], [0, 0, 0]));
+  const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const cross = (u, v) => [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+  const dot = (u, v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+  const unit = (u) => {
+    const l = Math.hypot(...u) || 1;
+    return [u[0] / l, u[1] / l, u[2] / l];
+  };
+  const VN = P.map((r) => r.map(() => [0, 0, 0]));
+  const tris = [];
+  const tri = (ia, ib, ic, o) => {
+    const [a, b, c] = [ia, ib, ic].map(([i, k]) => P[i][k]);
+    let fn = cross(sub3(b, a), sub3(c, a));
+    const out = dot(fn, sub3([(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3], o)) >= 0;
+    if (!out) fn = fn.map((v) => -v);
+    for (const [i, k] of [ia, ib, ic]) for (let x = 0; x < 3; x++) VN[i][k][x] += fn[x];
+    tris.push({v: out ? [ia, ib, ic] : [ia, ic, ib], fn: unit(fn)});
+  };
+  for (let i = 0; i < P.length - 1; i++) {
+    const o = cen[i].map((x, k) => (x + cen[i + 1][k]) / 2);
+    for (let k = 0; k < n; k++) {
+      const k2 = (k + 1) % n;
+      tri([i, k], [i, k2], [i + 1, k2], o);
+      tri([i, k], [i + 1, k2], [i + 1, k], o);
+    }
+  }
+  const pos = [];
+  const nor = [];
+  const fno = [];
+  for (const t of tris)
+    for (const [i, k] of t.v) {
+      pos.push(...P[i][k]);
+      nor.push(...unit(VN[i][k]));
+      fno.push(...t.fn);
+    }
+  const cap = (i, j) => {
+    for (let k = 0; k < n; k++) {
+      let [a, b, c] = [cen[i], P[i][k], P[i][(k + 1) % n]];
+      let fn = cross(sub3(b, a), sub3(c, a));
+      if (dot(fn, sub3(cen[i], cen[j])) < 0) {
+        [b, c] = [c, b];
+        fn = fn.map((v) => -v);
+      }
+      fn = unit(fn);
+      pos.push(...a, ...b, ...c);
+      for (let q = 0; q < 3; q++) {
+        nor.push(...fn);
+        fno.push(...fn);
+      }
+    }
+  };
+  if (capA) cap(0, 1);
+  if (capB) cap(P.length - 1, P.length - 2);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute('fnormal', new THREE.Float32BufferAttribute(fno, 3));
+  return g;
+}
+/** hard-surface shading for a smoothLoft: every face flat, so the bevels read as crisp chamfers */
+function facet(g) {
+  g.setAttribute('normal', g.attributes.fnormal.clone());
+  return g;
+}
+/** the segments where a geometry's surface crosses the plane axis = value (points passing keep()), lifted off the
+ * surface by a hair: an engraved panel line that follows the shell */
+function planeCut(g, axis, value, keep = () => true) {
+  const p = g.attributes.position;
+  const f = g.attributes.fnormal ?? g.attributes.normal;
+  const out = [];
+  for (let t = 0; t < p.count; t += 3) {
+    const V = [0, 1, 2].map((k) => [p.getX(t + k), p.getY(t + k), p.getZ(t + k)]);
+    const hit = [];
+    for (let e = 0; e < 3; e++) {
+      const a = V[e];
+      const b = V[(e + 1) % 3];
+      if ((a[axis] - value) * (b[axis] - value) < 0) {
+        const k = (value - a[axis]) / (b[axis] - a[axis]);
+        hit.push(a.map((v, i) => v + (b[i] - v) * k + f.getComponent(t, i) * 0.006));
+      }
+    }
+    if (hit.length === 2 && keep(hit[0]) && keep(hit[1])) out.push(...hit[0], ...hit[1]);
+  }
+  const lg = new THREE.BufferGeometry();
+  lg.setAttribute('position', new THREE.Float32BufferAttribute(out, 3));
+  return lg;
 }
 /** a limb shell: side profile [z, y] extruded across x (width w), its 12-ish edges chamfered */
 const hull = (pts, w, bevel = 0.08) => prism(pts, w, bevel).rotateY(-PI / 2);
@@ -260,7 +397,7 @@ function brushedMaps(seed) {
 function boxUV(g, tile = TILE, off = 0) {
   const p = g.attributes.position;
   if (!g.attributes.normal) g.computeVertexNormals();
-  const n = g.attributes.normal;
+  const n = g.attributes.fnormal ?? g.attributes.normal;
   const uv = new Float32Array(p.count * 2);
   for (let i = 0; i < p.count; i++) {
     const ax = Math.abs(n.getX(i));
@@ -297,7 +434,10 @@ export function buildFreedom() {
     frame: metal('#72767d', {metalness: 0.55}),
     joint: metal('#686c74', {roughness: 0.55, metalness: 0.35}),
     steel: metal('#b9bec5', {roughness: 0.22, bumpScale: 0.3}),
-        eye: new THREE.MeshBasicMaterial({color: '#ffc23a'}),
+        eye: new THREE.MeshBasicMaterial({color: '#ffc23a', toneMapped: false}),
+    socket: new THREE.MeshBasicMaterial({color: '#1b1410'}),
+    eyeLow: new THREE.MeshBasicMaterial({color: '#e07a12', toneMapped: false}),
+    headLens: new THREE.MeshPhysicalMaterial({color: '#8fa2b4', roughness: 0.1, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.8}),
         pocket: new THREE.MeshStandardMaterial({color: '#2c2f35', roughness: 0.7, metalness: 0.4, envMapIntensity: 0.4}),
         lens: new THREE.MeshPhysicalMaterial({color: '#3f6f8f', roughness: 0.08, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.6}),
     glow: new THREE.MeshBasicMaterial({color: '#ffcf8a'}),
@@ -312,6 +452,7 @@ export function buildFreedom() {
     highlight: new THREE.MeshBasicMaterial({color: '#e5452a', transparent: true, opacity: 0, depthWrite: false}),
   };
   const ink = new THREE.LineBasicMaterial({color: COLORS.ink, transparent: true, opacity: 0.28});
+  const seamInk = new THREE.LineBasicMaterial({color: COLORS.ink, transparent: true, opacity: 0.5});
   const PAINTS = ['white', 'grey', 'navy', 'blue', 'red', 'yellow', 'dark'];
   const BASE = Object.fromEntries(PAINTS.map((k) => [k, {m: M[k].metalness, r: M[k].roughness}]));
   const ON = Object.fromEntries(PAINTS.map((k) => [k, new THREE.Color(COLORS[k])]));
@@ -417,16 +558,15 @@ export function buildFreedom() {
     frame(rbox(0.46, 0.3, 0.16, 0.03), body, [Math.sin(a) * 0.86, 1.2, Math.cos(a) * 0.7], [0, a, 0], M.joint); // belt
   }
   // the centre block between the front skirts: long, gunmetal, slotted, as on the reference
-  frame(prism([[-0.4, 0.5], [0.4, 0.5], [0.44, -1.2], [-0.44, -1.2]], 0.6, 0.08), body, [0, 0, 0.72], [-0.06, 0, 0], M.frame);
-  armor(prism([[-0.44, -1.2], [0.44, -1.2], [0.2, -1.95], [-0.2, -1.95]], 0.6, 0.08), 'dark', body, [0, 0, 0.72], [-0.06, 0, 0], 'waist', {dist: 1.2});
-  slot(body, [0, -0.75, 1.05], 0.34, 0.7, [-0.06, 0, 0], 0, 0.08);
+  armor(prism([[-0.4, 0.75], [0.4, 0.75], [0.46, -0.3], [-0.46, -0.3]], 0.6, 0.08), 'white', body, [0, 0, 0.72], [-0.06, 0, 0], 'waist', {dist: 1.2});
+  armor(prism([[-0.46, -0.3], [0.46, -0.3], [0.44, -1.2], [0.2, -1.95], [-0.2, -1.95], [-0.44, -1.2]], 0.7, 0.08), 'navy', body, [0, 0, 0.72], [-0.06, 0, 0], 'waist', {dist: 1.2});
+  slot(body, [0, -0.95, 1.1], 0.34, 0.8, [-0.06, 0, 0], 0, 0.08);
   const skirts = {};
   for (const s of [-1, 1]) {
     // front skirts: 3.2 m long plates hung from the waist, cut to a point at the lower outer corner
     const fs = armor(prism([[0, 0], [1.05, 0], [1.3, -1.4], [1.1, -2.7], [0.5, -2.95], [0, -2.1]].map(([x, y]) => [x * s, y]), 0.26, 0.07), 'white', body, [s * 0.42, 1.25, 0.86], [-0.34, 0, s * 0.05], 'skirt', {dist: 1.6});
     armor(prism([[0.12, -0.85], [0.95, -0.85], [1.12, -1.5], [0.98, -2.45], [0.5, -2.67], [0.12, -2.0]].map(([x, y]) => [x * s, y]), 0.12, 0.04), 'white', fs, [0, 0, 0.16], [0, s * 0.14, 0], 'skirt', {reg: false}); // raised lower layer, a second facet angled out
     armor(rbox(0.08, 2.09, 0.06, 0.02), 'white', fs, [s * 0.61, -1.825, 0.26], [0, 0, Math.atan2(0.98 * s, 1.85)], 'skirt', {reg: false, edges: false}); // ridge
-    armor(rbox(0.3, 0.16, 0.06, 0.02), 'red', fs, [s * 0.62, -1.3, 0.25], [0, 0, 0], 'skirt', {reg: false, edges: false});
     for (const [bx, by] of [[0.15, -0.15], [0.92, -0.15], [1.0, -2.5]]) bolt(fs, s * bx, by, 0.14);
     // side skirts over the hips: they carry the rail cannon mounts
     skirts[s] = armor(prism([[-0.9, 0], [0.8, 0], [0.9, -1.4], [0.3, -2.5], [-0.6, -2.3], [-0.95, -1.2]], 0.3, 0.07).rotateY(-PI / 2), 'white', body, [s * 1.62, 1.35, -0.05], [0, 0, s * -0.1], 'skirt', {dist: 1.5});
@@ -459,23 +599,26 @@ export function buildFreedom() {
     frame(cylX(0.58, 1.3, 24), knee, [0, 0, 0], [0, 0, 0], M.joint);
     frame(rbox(0.9, 0.55, 0.5, 0.06), knee, [0, 0.15, 0.75], [0, 0, 0], M.joint); // the dark knee block the reference shows above the guard
     for (const kx of [-0.62, 0.62]) {
-      frame(cylX(0.55, 0.24, 28), knee, [kx, 0, 0], [0, 0, 0], M.frame);
-      frame(cylX(0.34, 0.06, 24), knee, [kx + Math.sign(kx) * 0.13, 0, 0], [0, 0, 0], M.steel);
-      for (let b = 0; b < 6; b++) bolt(knee, kx + Math.sign(kx) * 0.12, Math.cos((b / 6) * PI * 2) * 0.45, Math.sin((b / 6) * PI * 2) * 0.45, [0, PI / 2, 0]);
+      frame(cylX(0.44, 0.2, 28), knee, [kx * 0.92, 0, 0], [0, 0, 0], M.frame);
+      frame(cylX(0.24, 0.06, 24), knee, [kx * 0.92 + Math.sign(kx) * 0.11, 0, 0], [0, 0, 0], M.joint);
+      for (let b = 0; b < 6; b++) bolt(knee, kx * 0.92 + Math.sign(kx) * 0.1, Math.cos((b / 6) * PI * 2) * 0.36, Math.sin((b / 6) * PI * 2) * 0.36, [0, PI / 2, 0]);
     }
     frame(cyl(0.38, 0.34, SPEC.shin - 0.9, 14), knee, [0, -SPEC.shin / 2, 0]);
     // the knee guard, as on the reference front view and knee close-up: a long shield, narrow at the top, widest
     // (2.1 m) a third of the way down, pointed at the bottom; a raised faceted plate on its front with a long slot
-    armor(taper(prism([[-0.42, 0.4], [0.42, 0.4], [0.82, -0.35], [0.88, -1.3], [0.6, -2.15], [0.16, -2.5], [-0.16, -2.5], [-0.6, -2.15], [-0.88, -1.3], [-0.82, -0.35]], 1.5, 0.18), 1, 0.8, 1, 0.9), 'white', knee, [0, 0, 0.12], [0, 0, 0], 'knee', {dist: 1.8});
-    armor(prism([[-0.3, 0.2], [0.3, 0.2], [0.62, -0.35], [0.64, -1.25], [0.4, -2.0], [0, -2.32], [-0.4, -2.0], [-0.64, -1.25], [-0.62, -0.35]], 0.3, 0.06), 'white', knee, [0, 0, 0.87], [-0.03, 0, 0], 'knee', {dist: 2.0});
+    const kg = (y, w, zF) => [[-w, y, -0.5], [-w, y, zF - 0.32], [-w * 0.5, y, zF], [w * 0.5, y, zF], [w, y, zF - 0.32], [w, y, -0.5]];
+    armor(facet(smoothLoft([kg(-0.4, 0.8, 0.3), kg(-1.0, 1.03, 0.45), kg(-1.9, 1.06, 0.45), kg(-2.45, 0.85, 0.35), kg(-2.75, 0.5, 0.2)], 1, 1, true, true, 0.06)), 'white', knee, [0, 0, -0.1], [0, 0, 0], 'knee', {dist: 1.6, edgeAngle: 40}); // the calf armour wrapping round behind the shield
+    armor(facet(smoothLoft([kg(0.62, 0.34, 0.6), kg(-0.3, 0.6, 0.8), kg(-1.1, 0.84, 0.87), kg(-1.8, 0.88, 0.85), kg(-2.35, 0.66, 0.74), kg(-2.7, 0.22, 0.58)], 1, 1, true, true, 0.06)), 'white', knee, [0, 0, 0], [0, 0, 0], 'knee', {dist: 1.8, edgeAngle: 40}); // a teardrop shield: narrow top, widest two thirds down, a point below
+    armor(prism([[-0.26, 0.15], [0.26, 0.15], [0.5, -0.6], [0.56, -1.6], [0.36, -2.05], [0, -2.3], [-0.36, -2.05], [-0.56, -1.6], [-0.5, -0.6]], 0.3, 0.06), 'white', knee, [0, 0, 0.87], [-0.03, 0, 0], 'knee', {dist: 2.0});
     slot(knee, [0, -1.1, 1.07], 0.3, 1.1, [-0.03, 0, 0], 0, 0.1);
     for (const [bx, by] of [[-0.48, -0.3], [0.48, -0.3], [-0.5, -1.25], [0.5, -1.25]]) bolt(knee, bx, by, 1.04);
     // the shin below it: narrower, the calf thruster behind
-    armor(taper(hull([[0.35, -2.0], [0.32, -3.6], [0.85, -4.45], [-0.75, -4.45], [-0.6, -3.3], [-0.95, -2.0]], 0.95, 0.1), 1.0, 1, 1.15, 1), 'white', knee, [0, 0, 0], [0, 0, 0], 'leg', {dist: 1.5});
+    const shinRing = (y, hw, zF, zB, c = 0.15) => [[-hw + c, y, zF], [hw - c, y, zF], [hw, y, zF - c], [hw, y, zB + c], [hw - c, y, zB], [-hw + c, y, zB], [-hw, y, zB + c], [-hw, y, zF - c]];
+    armor(facet(smoothLoft([shinRing(-1.6, 0.5, 0.4, -1.1), shinRing(-2.4, 0.6, 0.5, -1.32), shinRing(-3.2, 0.62, 0.5, -1.22), shinRing(-3.9, 0.52, 0.45, -0.9), shinRing(-4.3, 0.55, 0.55, -0.8), shinRing(-4.7, 0.7, 0.78, -0.85)], 1, 1, true, true, 0.06)), 'white', knee, [0, 0, 0], [0, 0, 0], 'leg', {dist: 1.5, edgeAngle: 40}); // calf bulge behind, waisted above the ankle, flared into a cuff
     slot(knee, [0.6, -3.0, -0.1], 0.5, 0.45, [0, PI / 2, 0], 3, 0.08);
-    frame(rbox(0.5, 1.0, 0.1, 0.03), knee, [0, -3.6, -0.86], [0, 0, 0], M.pocket); // calf recess, slatted, a small nozzle under it
-    for (const cy of [-3.25, -3.6, -3.95]) armor(rbox(0.42, 0.06, 0.08, 0.015), 'grey', knee, [0, cy, -0.89], [0, 0, 0], 'leg', {reg: false, edges: false});
-    for (const cx of [-0.32, 0.32]) frame(rbox(0.1, 1.0, 0.12, 0.03), knee, [cx, -3.6, -0.86], [0, 0, 0], M.frame);
+    frame(rbox(0.5, 1.0, 0.1, 0.03), knee, [0, -3.5, -1.08], [0, 0, 0], M.pocket); // calf recess, slatted, a small nozzle under it
+    for (const cy of [-3.25, -3.6, -3.95]) armor(rbox(0.42, 0.06, 0.08, 0.015), 'grey', knee, [0, cy + 0.1, -1.11], [0, 0, 0], 'leg', {reg: false, edges: false});
+    for (const cx of [-0.32, 0.32]) frame(rbox(0.1, 1.0, 0.12, 0.03), knee, [cx, -3.5, -1.08], [0, 0, 0], M.frame);
     frame(lathe([[0.12, 0], [0.2, 0], [0.24, -0.2], [0.2, -0.22]]), knee, [0, -4.15, -0.92], [0, 0, 0], M.frame);
     frame(cyl(0.12, 0.12, 0.18, 12), knee, [0, -4.25, -0.92], [0, 0, 0], M.pocket);
     frame(rbox(0.9, 0.6, 0.4, 0.06), knee, [0, 0.1, -0.75], [0, 0, 0], M.frame); // knee-back block
@@ -496,27 +639,33 @@ export function buildFreedom() {
     frame(rbox(0.9, 0.8, 1.6, 0.08), foot, [0, -0.7, 0.2], [0, 0, 0], M.frame); // ankle block between the guards
     // ankle guard, from the reference side view and ankle close-up: a faceted collar band round the shin, a front
     // flap that drops to a downward V over the instep, splayed side plates and a rear flap over the heel
-    armor(taper(hull([[0.95, 0.42], [1.12, -0.12], [-1.12, -0.12], [-0.95, 0.42]], 2.3, 0.08), 0.85, 1, 1, 1), 'white', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.5}); // collar band
-    armor(prism([[-1.05, 0.05], [1.05, 0.05], [1.02, -0.42], [0.2, -1.0], [-0.2, -1.0], [-1.02, -0.42]], 0.32, 0.06), 'white', foot, [0, -0.08, 1.1], [-0.38, 0, 0], 'foot', {dist: 1.6}); // front chevron flap
-    armor(prism([[-0.75, -0.2], [0.75, -0.2], [0.68, -0.5], [0.12, -0.84], [-0.12, -0.84], [-0.68, -0.5]], 0.1, 0.03), 'white', foot, [0, -0.06, 1.3], [-0.38, 0, 0], 'foot', {reg: false}); // its raised inner facet
-    for (const kx of [-1.0, 1.0]) armor(hull([[1.15, -0.05], [-1.05, -0.05], [-1.3, -0.4], [0.05, -1.12], [0.4, -1.12], [1.45, -0.45]], 0.24, 0.06), 'white', foot, [kx * 1.0, 0, 0], [0, 0, kx * 0.1], 'foot', {dist: 1.5}); // side plates
-    for (const kx of [-1.0, 1.0]) armor(hull([[0.9, -0.3], [-0.8, -0.3], [-0.95, -0.42], [0.15, -0.95], [1.1, -0.55]], 0.08, 0.02), 'white', foot, [kx * 1.15, 0, 0], [0, 0, kx * 0.1], 'foot', {reg: false}); // raised facet
-    armor(hull([[-0.55, 0.25], [-1.35, -0.15], [-1.5, -0.45], [-0.9, -0.75], [-0.5, -0.5]], 2.15, 0.08), 'white', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.5}); // rear flap
-    for (const [bx, by] of [[-0.85, -0.35], [0.85, -0.35]]) bolt(foot, bx, by, 1.32, [-0.38, 0, 0]);
-    // the foot: a long red toe wedge whose top slopes from the ankle to the floor, a white instep plate along that
-    // slope with a dark slot, a red heel block, gunmetal between them
-    armor(narrowToe(hull([[0.5, -2.0], [2.8, -2.0], [2.8, -1.9], [0.6, -1.05], [0.5, -1.05]], 2.0, 0.08)), 'red', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.4});
-    armor(narrowToe(hull([[0.62, -0.9], [2.35, -1.6], [2.27, -1.76], [0.62, -1.06]], 1.45, 0.04)), 'white', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.6}); // instep
-    slot(foot, [0, -1.18, 1.35], 0.42, 0.55, [-1.17, 0, 0], 0, 0.06);
-    for (const z of [1.0, 2.25]) bolt(foot, 0.85 - (z - 0.7) * 0.12, -1.38 - (z - 0.6) * 0.42, z, [0, PI / 2, 0]);
-    armor(hull([[-1.6, -2.0], [-0.3, -2.0], [-0.3, -1.25], [-1.2, -1.15], [-1.6, -1.5]], 1.8, 0.08), 'red', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.4}); // heel
-    frame(rbox(1.4, 0.4, 0.9, 0.05), foot, [0, -1.8, 0.1], [0, 0, 0], M.joint); // the gunmetal sole bridge between heel and toe
+    // Rebuilt from the foot and ankle close-ups. The guard is a four-sided skirt: narrow round the shin, widest at
+    // 2.2 m, its side plates hanging to a point 0.95 m above the floor while the front and back are arched high.
+    const Y = (w) => w / 1.225 - 2; // height above the sole (m) -> foot-local y
+    const gRing = (ys, hw, zF, zB, c, zTip, k) => {
+      const h = [[0, zF], [hw - c, zF], [hw, zF - c], [hw, zTip], [hw, zB + c], [hw - c, zB], [0, zB]].map(([x, z], i) => [x * k, Y(Array.isArray(ys) ? ys[i] : ys), z * k]);
+      return [...h, ...h.slice(1, -1).reverse().map(([x, y, z]) => [-x, y, z])];
+    };
+    const gRings = (k) => [gRing(3.2, 0.62, 0.72, -0.95, 0.2, -0.1, k), gRing(2.95, 0.8, 0.9, -1.1, 0.25, -0.1, k), gRing(2.3, 1.1, 1.25, -1.5, 0.3, -0.15, k), gRing(2.1, 1.12, 1.27, -1.52, 0.3, -0.15, k), gRing([2.05, 1.95, 1.86, 0.95, 1.9, 1.95, 2.0], 1.06, 1.28, -1.52, 0.3, -0.2, k)];
+    const guardGeo = facet(smoothLoft(gRings(1), 1, 1, true, false, 0.06));
+    const guard = armor(guardGeo, 'white', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.5, edgeAngle: 40});
+    guard.add(new THREE.LineSegments(planeCut(guardGeo, 1, Y(2.9)), seamInk));
+    frame(smoothLoft(gRings(0.93), 1, 0, true, true), foot, [0, -0.02, 0], [0, 0, 0], M.pocket); // its dark inside
+    for (const kx of [-1, 1]) armor(hull([[1.1, Y(2.1)], [-1.35, Y(2.1)], [-1.38, Y(1.92)], [-0.2, Y(1.08)], [1.12, Y(1.88)]], 0.06, 0.02), 'white', foot, [kx * 1.1, 0, 0], [0, 0, 0], 'foot', {reg: false}); // raised side facet
+    for (const [bx, bw] of [[-0.75, 2.4], [0.75, 2.4]]) bolt(foot, bx, Y(bw), 1.24);
+    // the toe: a long wedge, red below and white above, the split climbing toward the ankle; a slot in the instep
+    const TOE = [[2.8, 0.6, 0.4, 0.44], [2.0, 0.8, 0.6, 1.0], [1.2, 0.95, 0.8, 1.58], [0.55, 1.02, 0.95, 2.0], [0.3, 1.0, 0.97, 2.0]];
+    armor(facet(smoothLoft(TOE.map(([z, hw, rt]) => [[-hw + 0.12, Y(0), z], [hw - 0.12, Y(0), z], [hw, Y(0.16), z], [hw * 0.94, Y(rt), z], [-hw * 0.94, Y(rt), z], [-hw, Y(0.16), z]]), 1, 1, true, true, 0.04)), 'red', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.4, edgeAngle: 40});
+    armor(facet(smoothLoft(TOE.map(([z, hw, rt, wt]) => [[-hw * 0.74, Y(rt - 0.03), z - 0.02], [hw * 0.74, Y(rt - 0.03), z - 0.02], [hw * 0.52, Y(wt), z - 0.02], [-hw * 0.52, Y(wt), z - 0.02]]), 1, 1, true, true, 0.04)), 'white', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.6, edgeAngle: 40});
+    slot(foot, [0, -0.875, 1.5], 0.36, 0.6, [-1.056, 0, 0], 0, 0.06);
+    armor(hull([[-0.8, Y(0)], [-1.6, Y(0)], [-1.8, Y(0.45)], [-1.6, Y(1.1)], [-0.65, Y(1.15)], [-0.5, Y(0.6)]], 1.7, 0.08), 'red', foot, [0, 0, 0], [0, 0, 0], 'foot', {dist: 1.4}); // heel
+    frame(rbox(1.2, 0.3, 0.9, 0.05), foot, [0, -1.6, -0.1], [0, 0, 0], M.pocket); // the gunmetal sole bridge between heel and toe
     frame(cylX(0.32, 1.3, 20), foot, [0, -1.45, 0.1], [0, 0, 0], M.frame); // the ankle mechanism's drum
     frame(rbox(1.2, 0.5, 1.0, 0.06), foot, [0, -1.55, 0.25], [0, 0, 0], M.joint); // arch
     piston(knee, [0.36, -SPEC.shin + 1.4, 0.3], ankle, [0.36, -0.3, 0.55], 0.12);
     piston(knee, [-0.36, -SPEC.shin + 1.4, 0.3], ankle, [-0.36, -0.3, 0.55], 0.12);
-    piston(hip, [0.36, -1.2, -0.5], knee, [0.36, -1.0, -0.6], 0.13);
-    piston(hip, [-0.36, -1.2, -0.5], knee, [-0.36, -1.0, -0.6], 0.13);
+    piston(hip, [0.3, -1.2, -0.35], knee, [0.3, -1.0, -0.45], 0.11);
+    piston(hip, [-0.3, -1.2, -0.35], knee, [-0.3, -1.0, -0.45], 0.11);
     powerLine(hip, [-0.25, 0, 0.3], [-0.25, -SPEC.thigh, 0.3]);
     powerLine(knee, [-0.25, 0, -0.25], [-0.25, -SPEC.shin + 0.2, -0.25]);
     legs.push({s, side, hip, knee, ankle, calfJet});
@@ -556,8 +705,8 @@ export function buildFreedom() {
   for (const x of [-0.5, 0.5]) frame(cyl(0.09, 0.09, 1.0, 8), waist, [x, 0.4, 0.5], [0, 0, 0], M.steel);
   // abdomen: gunmetal segments, the red cockpit block in front of them
   for (let i = 0; i < 2; i++) armor(rbox(1.5 + i * 0.2, 0.4, 1.3, 0.07), 'dark', waist, [0, 0.1 + i * 0.46, 0.05], [0, 0, 0], 'abdomen', {dist: 1.2});
-  armor(prism([[-0.4, 0.45], [0.4, 0.45], [0.34, -0.45], [-0.34, -0.45]], 0.5, 0.07), 'red', waist, [0, 0.15, 0.95], [-0.05, 0, 0], 'abdomen', {dist: 1.4});
-  for (const s of [-1, 1]) armor(rbox(0.75, 0.55, 1.3, 0.08), 'white', waist, [s * 0.85, 0.25, 0.1], [0, 0, -s * 0.08], 'abdomen', {dist: 1.3});
+  armor(prism([[-0.36, 0.25], [0.36, 0.25], [0.3, -0.25], [-0.3, -0.25]], 0.5, 0.07), 'red', waist, [0, 0.6, 0.95], [-0.05, 0, 0], 'abdomen', {dist: 1.4});
+  for (const s of [-1, 1]) armor(taper(rbox(0.62, 1.3, 1.5, 0.1), 0.8, 0.85, 1, 1), 'white', waist, [s * 1.0, 0.85, 0.1], [0, 0, s * 0.22], 'abdomen', {dist: 1.3}); // white flank plates beside the blue
   // ---------------------------------------------------------------- chest, rebuilt from the reference chest close-up
   // Local frame: y 0 is 13.99 m above the sole, z 0 is the shoulder line. Two navy pec blocks, each carrying one big
   // vent in a thick light-grey frame, stand apart either side of a 1.1 m centre column. The column is a prow: a
@@ -584,11 +733,12 @@ export function buildFreedom() {
     const yawN = node(hinge, [-s * 1.8 + s * 0.55, 0, 0.45]); // the pec face yaws outward about its inner front corner
     yawN.rotation.y = s * 0.35;
     const blk = node(yawN, [-s * 0.55, 0, -2.05]);
-    const geo = hull(inset([[-0.7, 1.12], [0.6, 1.24], [1.95, 0.9], [2.05, -0.1], [1.7, -0.42], [-0.7, -0.42]], 0.1), 1.35, 0.1);
+    const geo = hull(inset([[-0.7, 1.3], [0.5, 1.5], [1.95, 1.02], [2.05, 0.1], [1.6, -0.17], [-0.7, -0.17]], 0.1), 1.35, 0.1);
     armor(taper(geo, 0.92, 1, 1, 1), 'navy', blk, [s * 1.25, 0, 0], [0, 0, 0], 'chest', {dist: 1.8});
     // the vent on the slanted front face, centred 14.25 m up and 1.14 m out
-    chestVent(blk, [s * 1.14, 0.13, 2.01], [0.05, 0, 0], 1.0, 0.74);
-    for (const [bx, by] of [[0.62, 0.86], [1.66, 0.86]]) bolt(blk, s * bx, by, 1.2 + (1.2 - by) * 1.3, [-0.9, 0, 0]);
+    chestVent(blk, [s * 1.14, 0.56, 2.0], [0.05, 0, 0], 1.12, 0.8);
+    armor(rbox(1.05, 0.34, 1.5, 0.06), 'dark', blk, [s * 1.2, -0.3, 0.95], [0, 0, 0], 'chest', {reg: false}); // the dark under-block
+    for (const bx of [0.72, 1.6]) bolt(blk, s * bx, 1.2, 1.36, [-1.2, 0, 0]);
     // collar tower: a navy block with a gunmetal cap, beside the neck
     armor(rbox(0.7, 0.5, 0.75, 0.07), 'navy', chest, [s * 1.32, 1.25, 0.15], [0, 0, s * -0.26], 'chest', {dist: 1.6});
     frame(rbox(0.64, 0.12, 0.66, 0.03), chest, [s * 1.36, 1.53, 0.15], [0, 0, s * -0.26], M.frame);
@@ -597,16 +747,16 @@ export function buildFreedom() {
   // the prow: one node, so the whole centre column can lift away from the reactor
   const prow = node(chest, [0, 0, 0], 'prow');
   // collar plate: navy, from the neck down and forward to the chevron, narrower at the top
-  armor(taper(hull([[0.05, 1.25], [0.45, 1.25], [2.0, 0.82], [1.8, 0.7], [0.05, 0.75]], 1.3, 0.08), 1, 1, 0.92, 1), 'navy', prow, [0, 0, 0], [0, 0, 0], 'chest', {dist: 1.6});
-  // the red chevron at the prow's front edge: two halves meeting low at the centre
-  armor(taper(hull([[1.95, 0.82], [2.55, 0.66], [2.55, 0.48], [2.0, 0.5]], 1.25, 0.05), 1, 1, 0.85, 1), 'red', prow, [0, 0, 0], [0, 0, 0], 'chest', {dist: 1.8}); // the red band at the prow's front edge
-  // the dark column below the chevron
-  armor(taper(hull([[0.4, 0.5], [2.05, 0.48], [1.8, -0.55], [1.45, -1.0], [0.4, -1.0]], 0.75, 0.08), 1, 1, 0.8, 1), 'navy', prow, [0, 0, 0], [0, 0, 0], 'chest', {dist: 1.5});
-  // lower chest: the bright blue V either side of the column, 1.15 m from the vents' bottom to its tip at 12.7 m
-  for (const s of [-1, 1]) armor(prism([[0.38, -0.32], [1.25, -0.32], [0.62, -1.04], [0.38, -1.04]].map(([x, y]) => [x * s, y]), 1.4, 0.08), 'blue', chest, [0, 0, 0.75], [0.12, 0, 0], 'chest', {dist: 1.5});
+  armor(taper(hull([[0.1, 1.42], [0.9, 1.5], [2.38, 0.88], [2.3, 0.72], [0.1, 0.8]], 1.24, 0.08), 0.8, 1, 1, 1), 'navy', prow, [0, 0, 0], [0, 0, 0], 'chest', {dist: 1.6});
+  // the red chevron wrapped round the prow's front edge, its ends kicked up along the top plate
+  armor(hull([[2.3, 0.92], [2.66, 0.8], [2.66, 0.42], [2.3, 0.4]], 1.2, 0.05), 'red', prow, [0, 0, 0], [0, 0, 0], 'chest', {dist: 1.8});
+  // the dark column below the chevron, receding to the cockpit hatch
+  armor(taper(hull([[0.4, 0.74], [2.4, 0.72], [2.4, 0.4], [2.0, -0.35], [1.4, -0.95], [0.4, -0.95]], 0.9, 0.08), 1, 1, 0.78, 1), 'navy', prow, [0, 0, 0], [0, 0, 0], 'chest', {dist: 1.5});
+  // lower chest and abdomen: bright blue flanks either side of the column, receding and narrowing down to the skirts
+  for (const s of [-1, 1]) armor(prism([[0.4, -0.15], [1.3, -0.15], [1.2, -0.7], [0.62, -1.75], [0.4, -1.75]].map(([x, y]) => [x * s, y]), 1.2, 0.08), 'blue', chest, [0, 0, 1.25], [0.45, 0, 0], 'abdomen', {dist: 1.5});
   // the cockpit hatch: the red block at the foot of the column; it drops open on REACTOR
-  const hatchHinge = node(chest, [0, -1.07, 1.25], 'hatch');
-  armor(prism([[-0.3, 0.55], [0.3, 0.55], [0.26, 0], [-0.26, 0]], 0.5, 0.06), 'red', hatchHinge, [0, 0, 0], [0, 0, 0], 'chest', {dist: 1.8});
+  const hatchHinge = node(chest, [0, -1.2, 1.4], 'hatch');
+  armor(prism([[-0.3, 0.5], [0.3, 0.5], [0.26, 0], [-0.26, 0]], 0.5, 0.06), 'red', hatchHinge, [0, 0, 0], [0, 0, 0], 'chest', {dist: 1.8});
   // the reactor: a glowing core in three spinning rings, a coolant jacket, the N-jammer canceller as a ring stack
   const reactor = node(chest, [0, 0.2, 0.05], 'reactor');
   frame(cyl(0.4, 0.4, 1.3, 24), reactor, [0, 0, 0], [0, 0, 0], M.core);
@@ -629,138 +779,150 @@ export function buildFreedom() {
   frame(cyl(0.3, 0.36, 0.95, 16), neck, [0, 0.15, -0.1], [0, 0, 0], M.pocket); // the neck, a dark recess between the chin and the collar plate
   for (let k = 0; k < 2; k++) frame(cyl(0.5, 0.5, 0.09, 18), neck, [0, -0.25 + k * 0.15, 0], [0, 0, 0], M.frame); // neck rings, under the collar
   for (const s of [-1, 1]) frame(cyl(0.07, 0.07, 0.8, 8), neck, [s * 0.36, 0.1, -0.22], [0, 0, s * 0.15], M.steel); // neck pistons
-  // Head, measured on the reference front view at 79 px/m: a tall shield, not a box. Eye line at 16.45 m (local y 0);
-  // the helmet crown is 0.75 m wide at 17.25 m, the head is widest (1.72 m) across the temples, the cheeks close in
-  // to a 0.45 m chin at 15.45 m; the camera housing tops out at 17.55 m. The long V-fin tips reach ±1.8 m at 17.9 m,
-  // the two short inner blades carry the 18.03 m tip. Local z 0 is the head's centre, the face is at z ≈ 0.9.
-  // Head, measured on the reference head close-up (259 px/m) and checked against the front and side views. Local
-  // y 0 is the eye line, z forward, the face at z ≈ 0.85. Camera tower top +1.3, chin bottom -0.75, 1.72 m across the
-  // side guards at the brow, the brow 0.6 m ahead of the mouth in side view, the fins swept back about 30 degrees.
+  // Head, rebuilt as a sculpt from the reference head close-up (front, 388.5 px/m at x3) and the side, 3/4 and back
+  // views of the sheet. Local y 0 is the eye line, z forward, the face mask's ridge at z 0.85. Every shell is a loft
+  // over measured cross-sections, not a box: a narrow dome over a wider ear shell, a camera tower running back as a
+  // crown ridge, the red beak crest, diamond-section V-fins, a ridged mask, tall cheek guards and yawed side vents.
   const head = node(neck, [0, 0.82, -0.08], 'head');
-  // helmet dome: a faceted shell, narrow at the crown, widest just above the eyes, its lower front edge the brow
-  {
-    const g = new THREE.SphereGeometry(1, 14, 9, 0, PI * 2, 0, 1.92).toNonIndexed();
-    g.scale(0.8, 0.82, 1.08);
-    g.rotateX(0.12); // the crown slopes down toward the brow, as in the side view
-    g.computeVertexNormals();
-    armor(g, 'white', head, [0, 0.42, -0.25], [0, 0, 0], 'head', {dist: 1.4});
+  const mir = (half) => [...half, ...half.slice().reverse().filter((p) => Math.abs(p[0]) > 1e-6).map(([x, y, z]) => [-x, y, z])];
+  const HA = (geo, key, pos = [0, 0, 0], rot = [0, 0, 0], opt = {}) => armor(geo, key, opt.parent ?? head, pos, rot, opt.asm ?? 'head', {dist: 1.4, ...opt});
+  // helmet dome: a crowned shell, 1.08 m above the eyes on the centre line, 0.95 m beside the tower, 1.32 m wide at
+  // the temples in front (close-up outline) and widening behind so it runs into the ear shell at the back (rear view)
+  const domeRing = (z, yC, yT, wT, wS, yS, wM, yM, yB = 0.2) => mir([[wM, yB, z], [wM, yM, z], [wS, yS, z], [wT, yT, z], [0, yC, z]]);
+  const domeM = HA(smoothLoft([
+    domeRing(0.95, 0.5, 0.48, 0.16, 0.22, 0.42, 0.26, 0.32, 0.16), // the visor: its lower edge is the brow diagonal of the side view
+    domeRing(0.84, 0.58, 0.56, 0.2, 0.32, 0.47, 0.44, 0.36, 0.14),
+    domeRing(0.45, 0.95, 0.88, 0.25, 0.46, 0.72, 0.62, 0.5, 0.28),
+    domeRing(0.05, 0.98, 0.93, 0.27, 0.52, 0.8, 0.68, 0.62, 0.42),
+    domeRing(-0.5, 1.0, 0.95, 0.28, 0.54, 0.84, 0.66, 0.64, 0.4),
+    domeRing(-0.95, 0.94, 0.88, 0.3, 0.52, 0.8, 0.62, 0.62, 0.4),
+    domeRing(-1.2, 0.78, 0.7, 0.24, 0.44, 0.64, 0.52, 0.5, 0.3),
+    domeRing(-1.29, 0.56, 0.5, 0.16, 0.28, 0.44, 0.34, 0.36, 0.1),
+  ], 3, 2), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.5});
+  // ear shell: the wide lower helmet, 1.74 m across. Side view: its top climbs from 0.46 m at the vent to 0.7 m at the
+  // back, the back is a large round, the bottom edge sits 0.38 m under the eyes. Corners are double-cut to read round.
+  const shellRing = (z, w, yT, yB, c = 0.2, c2 = 0.2) => mir([[w - c2, yB, z], [w - 0.3 * c2, yB + 0.3 * c2, z], [w, yB + c2, z], [w, yT - c, z], [w - 0.3 * c, yT - 0.3 * c, z], [w - c, yT, z]]);
+  const shellM = HA(smoothLoft([
+    shellRing(0.3, 0.5, 0.2, -0.34, 0.06, 0.1),
+    shellRing(0.0, 0.79, 0.36, -0.36, 0.1, 0.16),
+    shellRing(-0.1, 0.87, 0.47, -0.38, 0.16, 0.18),
+    shellRing(-0.2, 0.87, 0.52, -0.38, 0.16, 0.2),
+    shellRing(-0.5, 0.87, 0.54, -0.38, 0.24, 0.2),
+    shellRing(-0.95, 0.84, 0.6, -0.38, 0.34, 0.22),
+    shellRing(-1.2, 0.74, 0.52, -0.34, 0.34, 0.24),
+    shellRing(-1.31, 0.58, 0.38, -0.26, 0.24, 0.2),
+    shellRing(-1.36, 0.4, 0.22, -0.14, 0.12, 0.1),
+    shellRing(-1.37, 0.16, 0.1, -0.04, 0.05, 0.04),
+  ], 3, 1), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.3});
+  // engraved panel lines that follow the shells (side and rear views of the reference)
+  const cutLine = (mesh, axis, value, keep) => mesh.add(new THREE.LineSegments(planeCut(mesh.geometry, axis, value, keep), seamInk));
+  cutLine(domeM, 2, -0.42, (q) => q[1] > 0.45);
+  cutLine(domeM, 2, 0.24, (q) => q[1] > 0.4);
+  cutLine(domeM, 1, 0.74, (q) => q[2] < 0.35 && q[2] > -1.1);
+  cutLine(domeM, 0, 0, (q) => q[2] < -1.0);
+  cutLine(shellM, 2, -0.36, (q) => q[1] > -0.36);
+  cutLine(shellM, 2, -1.02, (q) => q[1] > -0.3);
+  cutLine(shellM, 0, 0, (q) => q[2] < -1.0 && q[1] > -0.3);
+  cutLine(shellM, 1, -0.14, (q) => q[2] < -0.36);
+  // the rim under the helmet, a narrower white band down to the neck (rear and rear 3/4 views)
+  HA(smoothLoft([shellRing(0.3, 0.4, -0.33, -0.5, 0.02, 0.08), shellRing(-0.05, 0.64, -0.33, -0.52, 0.02, 0.1), shellRing(-0.95, 0.64, -0.33, -0.52, 0.02, 0.1), shellRing(-1.2, 0.5, -0.3, -0.5, 0.02, 0.1)], 2, 1), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.2});
+  frame(rbox(1.0, 0.9, 1.6, 0.1), head, [0, 0.1, -0.4], [0, 0, 0], M.frame); // the skull inside
+  frame(rbox(0.66, 0.95, 0.1, 0.03), head, [0, -0.1, 0.53], [0, 0, 0], M.pocket); // dark backing behind the face
+  // camera tower: leans back, 0.47 m wide at the brow and 0.3 m at its top 1.3 m above the eyes
+  const twRing = (y, hw, zF, zB) => [[-hw, y, zB], [-hw, y, zF - 0.05], [-hw + 0.05, y, zF], [hw - 0.05, y, zF], [hw, y, zF - 0.05], [hw, y, zB]];
+  HA(smoothLoft([twRing(0.46, 0.235, 1.0, 0.45), twRing(0.66, 0.235, 1.0, 0.4), twRing(1.12, 0.19, 0.86, 0.3), twRing(1.22, 0.18, 0.8, 0.26), twRing(1.3, 0.15, 0.64, 0.22)], 1, 1, true, true, 0.03), 'white', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.6});
+  frame(rbox(0.27, 0.4, 0.06, 0.02), head, [0, 0.875, 0.935], [-0.295, 0, 0], M.pocket); // camera recess
+  frame(rbox(0.24, 0.27, 0.05, 0.02), head, [0, 0.8, 0.965], [-0.295, 0, 0], M.joint); // lens bezel
+  frame(rbox(0.19, 0.21, 0.05, 0.03), head, [0, 0.8, 0.98], [-0.295, 0, 0], M.headLens);
+  HA(rbox(0.34, 0.05, 0.14, 0.015), 'white', [0, 1.1, 0.88], [-0.295, 0, 0], {reg: false}); // hood over the camera
+  // crown ridge: the tower carried back over the dome as a blade, ending in an overhanging tail
+  HA(hull([[0.36, 0.9], [0.3, 1.2], [0.0, 1.28], [-0.46, 1.33], [-0.6, 0.9]], 0.34, 0.04), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.7});
+  HA(hull([[-0.5, 1.325], [-0.6, 1.3], [-1.22, 1.04], [-1.02, 0.8], [-0.7, 0.88], [-0.64, 0.9]], 0.34, 0.04), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.8}); // the tail plate, split from the front by a raked gap
+  // red crest: a beak, widest at the top, its nose 1.36 m ahead of the head centre, the point down between the eyes
+  const crRing = (y, hw, zF, zB) => [[-hw, y, zB], [-hw, y, zF - 0.05], [-hw * 0.55, y, zF], [hw * 0.55, y, zF], [hw, y, zF - 0.05], [hw, y, zB]];
+  HA(smoothLoft([crRing(0.5, 0.17, 1.08, 0.8), crRing(0.12, 0.11, 1.33, 0.8), crRing(-0.03, 0.06, 1.16, 0.8)], 1, 1, true, true, 0.03), 'red', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.5});
+  for (const s of [-1, 1]) {
+    frame(cylZ(0.022, 0.03, 10), head, [s * 0.1, 0.42, 1.14], [-0.58, 0, 0], M.pocket);
+    frame(cylZ(0.02, 0.03, 10), head, [s * 0.07, 0.17, 1.3], [-0.58, 0, 0], M.pocket);
   }
-  // the solid inside: a gunmetal skull block filling the dome, and the white lower back of the head closing it
-  // between the side guards, so the helmet never reads as an empty shell from behind or below
-  frame(rbox(1.3, 1.1, 1.9, 0.12), head, [0, 0.15, -0.25], [0, 0, 0], M.frame);
-  armor(prism([[-0.62, 0.15], [0.62, 0.15], [0.6, -0.35], [0.36, -0.7], [-0.36, -0.7], [-0.6, -0.35]], 1.0, 0.08), 'white', head, [0, 0, -0.85], [0, 0, 0], 'head', {dist: 1.3}); // lower back of the head
-  frame(rbox(1.2, 0.12, 1.5, 0.03), head, [0, -0.62, -0.35], [0, 0, 0], M.joint); // underside plate over the neck
-  armor(rbox(0.16, 0.1, 1.1, 0.03), 'white', head, [0, 1.2, -0.2], [0.12, 0, 0], 'head', {reg: false}); // crown ridge
-  armor(rbox(0.8, 0.5, 0.3, 0.08), 'white', head, [0, 0.3, -1.12], [0, 0, 0], 'head', {dist: 1.3}); // occiput
-  frame(rbox(0.3, 0.18, 0.06, 0.02), head, [0, 0.3, -1.29], [0, 0, 0], M.lens); // rear sensor
-  // camera tower on the forehead, above the crest, leaning back with the brow
-  armor(rbox(0.44, 0.82, 0.6, 0.09), 'white', head, [0, 0.9, 0.6], [-0.25, 0, 0], 'head', {dist: 1.5});
-  frame(rbox(0.3, 0.3, 0.08, 0.03), head, [0, 0.92, 0.92], [-0.25, 0, 0], M.pocket);
-  frame(rbox(0.22, 0.2, 0.05, 0.02), head, [0, 0.92, 0.97], [-0.25, 0, 0], M.lens);
-  // the face: a dark recess under the brow, amber eyes in a V, a white mouth plate with two slits, a red chin
-  frame(prism([[-0.5, 0.14], [0.5, 0.14], [0.48, -0.16], [-0.48, -0.16]], 0.3, 0.03), head, [0, 0, 0.55], [0, 0, 0], M.pocket); // eye band recess
-  for (const s of [-1, 1]) armor(prism([[0.1, -0.12], [0.5, -0.04], [0.46, -0.36], [0.26, -0.62], [0.12, -0.6]].map(([x, y]) => [x * s, y]), 0.3, 0.04), 'white', head, [0, 0, 0.62], [0.1, 0, s * 0.0], 'head', {dist: 1.3}); // face mask cheeks
-  armor(prism([[-0.22, -0.09], [0.22, -0.09], [0.19, -0.3], [0.14, -0.44], [-0.14, -0.44], [-0.19, -0.3]], 0.28, 0.04), 'white', head, [0, 0, 0.78], [0.12, 0, 0], 'head', {dist: 1.2}); // mouth plate
-  for (const y of [-0.19, -0.26]) frame(rbox(0.22, 0.03, 0.05, 0.01), head, [0, y, 0.93], [0.12, 0, 0], M.pocket);
-  armor(prism([[-0.1, -0.42], [0.1, -0.42], [0.1, -0.62], [0.05, -0.74], [-0.05, -0.74], [-0.1, -0.62]], 0.24, 0.04), 'red', head, [0, 0, 0.66], [0.22, 0, 0], 'head', {dist: 1.2}); // chin
-  // the red crest: a shield pointing down between the eyes, its top leaning back
-  armor(prism([[-0.18, 0.56], [0.18, 0.56], [0.18, 0.18], [0, -0.1], [-0.18, 0.18]], 0.3, 0.03), 'red', head, [0, 0, 1.04], [-0.38, 0, 0], 'head', {dist: 1.4});
-  for (const bx of [-0.1, 0.1]) frame(cylZ(0.03, 0.04, 10), head, [bx, 0.2, 1.13], [-0.38, 0, 0], M.pocket);
+  // face mask: a ridged plate, two slits across the ridge, and the red chin below it
+  const mkRing = (y, w, zC, zS) => [[-w, y, zS - 0.25], [-w, y, zS], [0, y, zC], [w, y, zS], [w, y, zS - 0.25]];
+  HA(smoothLoft([mkRing(-0.115, 0.3, 0.8, 0.66), mkRing(-0.335, 0.28, 0.82, 0.66), mkRing(-0.566, 0.19, 0.77, 0.64), mkRing(-0.6, 0.1, 0.73, 0.62)], 1, 1, true, true, 0.03), 'white', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.2});
+  const chRing = (y, hw, zF) => [[-hw, y, zF - 0.24], [-hw, y, zF - 0.04], [-hw * 0.5, y, zF], [hw * 0.5, y, zF], [hw, y, zF - 0.04], [hw, y, zF - 0.24]];
+  HA(smoothLoft([chRing(-0.4, 0.05, 0.83), chRing(-0.58, 0.1, 0.93), chRing(-0.76, 0.065, 0.84)], 1, 1, true, true, 0.03), 'red', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.2});
+  /** a V-fin blade: diamond section tapering from root R to a point at T, its flat facing nrm */
+  const blade = (R0, T, w0, th0, nrm, root = null) => {
+    const r0 = new V3(...R0);
+    const a = new V3(...T).sub(r0);
+    const L = a.length();
+    a.normalize();
+    const p = new V3().crossVectors(new V3(...nrm), a).normalize();
+    const n = new V3().crossVectors(a, p).normalize();
+    const ring = (t, w, th) => {
+      const c = r0.clone().addScaledVector(a, L * t);
+      return [[p, w / 2], [n, th / 2], [p, -w / 2], [n, -th / 2]].map(([d, k]) => c.clone().addScaledVector(d, k).toArray());
+    };
+    // root: {up, front, low, back} points to start from instead of a plain diamond (the blade's foot on the crest)
+    const first = root ? (p.y > 0 ? [root.up, root.front, root.low, root.back] : [root.low, root.front, root.up, root.back]) : ring(0, w0, th0);
+    return loft([first, ring(0.22, w0 * 0.78, th0), ring(0.55, w0 * 0.45, th0 * 0.8), ring(1, 0.012, 0.012)]);
+  };
   const eyes = [];
   for (const s of [-1, 1]) {
-    const brow = node(head, [s * 0.14, 0, 0.86]);
-    brow.rotation.y = -s * 0.45;
-    armor(prism([[0, 0.04], [s * 0.46, 0.2], [s * 0.48, 0.3], [0, 0.18]], 0.12, 0.02), 'white', brow, [0, 0, 0], [0, 0, 0], 'head', {dist: 1.4}); // brow visor
-    const e = frame(prism([[s * 0.04, -0.01], [s * 0.44, 0.12], [s * 0.47, -0.02], [s * 0.1, -0.13]], 0.05, 0.01), head, [0, 0, 0.86], [0, 0, 0], M.eye);
+    // V-fins: the long blade out to the side and back, the short one nearly upright to the 18.03 m tip
+    HA(blade([s * 0.12, 0.25, 0.96], [s * 1.66, 1.45, -0.1], 0.26, 0.08, [0, -0.45, 1], {up: [s * 0.12, 0.48, 0.95], front: [s * 0.16, 0.25, 1.04], low: [s * 0.1, 0.02, 0.97], back: [s * 0.12, 0.25, 0.86]}), 'yellow', [0, 0, 0], [0, 0, 0], {asm: 'vfin', dist: 1.6});
+    HA(blade([s * 0.27, 0.36, 0.92], [s * 0.45, 1.75, 0.6], 0.12, 0.06, [s * 0.25, -0.2, 1]), 'yellow', [0, 0, 0], [0, 0, 0], {asm: 'vfin', dist: 1.6});
+    // brow visor: sweeps out and back from the crest, its lower lip over the eye
+    const brow = node(head, [s * 0.1, 0, 0.94]);
+    brow.rotation.y = s * 0.5;
+    HA(prism([[0, 0.0], [0.37, 0.12], [0.5, 0.22], [0.48, 0.27], [0.3, 0.21], [0, 0.1]].map(([x, y]) => [x * s, y]), 0.16, 0.03), 'white', [0, 0, 0], [-0.25, 0, 0], {parent: brow});
+    // eye: an amber wedge slanting down to the crest, in a dark socket
+    const eye = node(head, [s * 0.07, 0, 0.8]);
+    eye.rotation.y = s * 0.42;
+    const e = frame(prism([[0, -0.03], [0.37, 0.09], [0.36, 0.0], [0.01, -0.055]].map(([x, y]) => [x * s, y]), 0.04, 0.004), eye, [0, 0, 0], [0, 0, 0], M.eye);
+    frame(prism([[0.01, -0.055], [0.36, 0.0], [0.34, -0.07], [0.02, -0.095]].map(([x, y]) => [x * s, y]), 0.04, 0.004), eye, [0, 0, -0.005], [0, 0, 0], M.eyeLow).castShadow = false; // the orange lower lid
     e.castShadow = false;
     eyes.push(e);
-    // side guard: a tall plate from the temple to beside the chin, tilting in at the bottom
-    const sideG = node(head, [s * 0.64, 0, 0]);
-    sideG.rotation.z = -s * 0.16;
-    armor(hull([[0.68, 0.3], [0.76, 0.0], [0.6, -0.4], [0.32, -0.66], [-0.2, -0.58], [-0.4, -0.1], [-0.35, 0.3]], 0.34, 0.05), 'white', sideG, [0, 0, 0], [0, 0, 0], 'head', {dist: 1.5});
-    // five angled vent slats on its front-outer face, in a dark recess
-    frame(rbox(0.3, 0.62, 0.06, 0.02), head, [s * 0.62, -0.08, 0.79], [0, 0, -s * 0.16], M.pocket);
-    frame(rbox(0.03, 0.5, 0.42, 0.02), head, [s * 0.86, -0.1, 0.28], [0, 0, -s * 0.16], M.pocket); // side vent recess behind the eye
-    for (let k = 0; k < 4; k++) frame(rbox(0.05, 0.05, 0.36, 0.01), head, [s * (0.88 - k * 0.02), 0.08 - k * 0.12, 0.28], [0.45, 0, -s * 0.16], M.frame); // its angled slats
-    for (let k = 0; k < 5; k++) frame(rbox(0.24, 0.045, 0.06, 0.01), head, [s * (0.63 - k * 0.03), 0.14 - k * 0.11, 0.82], [0, 0, s * 0.4], M.frame);
-    const tp = node(head, [0, 0, 0.42]);
-    tp.rotation.y = -s * 0.32;
-    armor(prism([[s * 0.24, 0.98], [s * 0.6, 0.72], [s * 0.72, 0.56], [s * 0.6, 0.54], [s * 0.22, 0.8]], 0.36, 0.04), 'white', tp, [0, 0, 0], [0, 0, 0], 'head', {dist: 1.4}); // temple plate
-    // temple sensor: a dark disc in a ring on the dome
-    const ts = node(head, [s * 0.56, 0.36, 0.66]);
-    ts.rotation.y = s * 0.7;
-    frame(cylZ(0.09, 0.06, 16), ts, [0, 0, 0], [0, 0, 0], M.pocket);
-    frame(new THREE.TorusGeometry(0.09, 0.025, 6, 18), ts, [0, 0, 0.02], [0, 0, 0], M.steel);
-    // temple pod with the CIWS muzzles, behind the sensor
-    const pod = armor(rbox(0.18, 0.32, 0.5, 0.05), 'white', head, [s * 0.82, 0.32, -0.15], [0, 0, 0], 'head', {dist: 1.4});
-    for (const y of [0.07, -0.07]) frame(cylZ(0.04, 0.1, 8), pod, [0, y, 0.24], [0, 0, 0], M.pocket);
-    // V-fins, swept back about 30 degrees: the long blade to the side, the short one nearly vertical to 18.03 m
-    armor(prism([[s * 0.0, -0.16], [s * 1.68, 1.53], [s * 1.64, 1.6], [s * 0.0, 0.2]], 0.1, 0.02), 'yellow', head, [s * 0.12, 0.42, 0.98], [-0.55, 0, 0], 'vfin', {dist: 1.6});
-    armor(prism([[s * 0.0, -0.06], [s * 0.2, 1.52], [s * 0.13, 1.54], [s * -0.06, 0.06]], 0.07, 0.015), 'yellow', head, [s * 0.2, 0.5, 0.95], [-0.55, 0, 0], 'vfin', {dist: 1.6});
+    frame(rbox(0.42, 0.36, 0.05, 0.02), eye, [s * 0.17, 0.0, -0.05], [0, 0, 0], M.pocket);
+    frame(prism([[-0.03, -0.01], [0.39, 0.125], [0.4, 0.0], [0.37, -0.1], [0.0, -0.125]].map(([x, y]) => [x * s, y]), 0.03, 0.004), eye, [0, 0, -0.012], [0, 0, 0], M.socket); // dark rim round the eye
+    // mouth slits, lying on the mask's two facets
+    for (const y of [-0.19, -0.245]) frame(rbox(0.09, 0.02, 0.03, 0.008), head, [s * 0.046, y, 0.8], [0, s * 0.5, 0], M.pocket);
+    // cheek guard: a tall slab from the brow to below the chin line
+    const ck = node(head, [s * 0.4, 0, 0.62]);
+    ck.rotation.y = s * 0.05;
+    const ckO = (z, yLo, yMid, yTop) => [[-0.08, Math.min(0.02, yTop - 0.06)], [0.1, yTop], [0.03, (yTop + yMid) / 2], [-0.02, yMid], [-0.03, yLo], [-0.1, yLo + 0.01], [-0.09, -0.18]].map(([x, y]) => [x * s, y, z]);
+    HA(smoothLoft([ckO(0.18, -0.68, -0.3, 0.15), ckO(0.1, -0.68, -0.3, 0.15), ckO(0.0, -0.62, -0.3, 0.0), ckO(-0.12, -0.5, -0.28, -0.05), ckO(-0.32, -0.36, -0.26, -0.08)], 1, 1, true, true, 0.03), 'white', [0, 0, 0], [0, 0, 0], {parent: ck, edgeAngle: 50, dist: 1.3}); // the top drops away behind the brow so the eye shows from the side; the jaw edge climbs toward the ear
+    HA(prism([[0.64, -0.36], [0.44, -0.4], [0.46, -0.6], [0.51, -0.7], [0.57, -0.58]].map(([x, y]) => [x * s, y]), 0.3, 0.03), 'white', [0, 0, 0.1], [0, 0, 0], {reg: false}); // tab under the vent
+    // side vent on the yawed face between the cheek guard and the ear: a dark recess, four slats falling inward
+    const vent = node(head, [s * 0.59, -0.04, 0.225]); // 0.09 m proud of the ear shell's yawed face
+    vent.rotation.y = s * 0.8;
+    // the ear guard: an angular rim round a dark recess, its outline read off the front close-up; open on the cheek side
+    {
+      const rim = [[-0.24, 0.23], [-0.1, 0.32], [0.24, 0.31], [0.275, 0.17], [0.24, -0.14], [0.14, -0.27], [-0.04, -0.34], [-0.24, -0.31]].map(([x, y]) => [x * s, y]);
+      frame(prism(rim, 0.03, 0.004), vent, [0, 0, 0.09], [0, 0, 0], M.pocket);
+      for (let i = 0; i < rim.length - 1; i++) {
+        const [ax, ay] = rim[i];
+        const [bx, by] = rim[i + 1];
+        HA(rbox(Math.hypot(bx - ax, by - ay) + 0.05, 0.06, 0.1, 0.02), 'white', [(ax + bx) / 2, (ay + by) / 2, 0.12], [0, 0, Math.atan2(by - ay, bx - ax)], {parent: vent, reg: false, edgeAngle: 50});
+      }
+    }
+    for (let k = 0; k < 4; k++) HA(rbox(0.35, 0.065, 0.09, 0.015), 'white', [-s * 0.02, 0.12 - k * 0.115, 0.135], [0.45, 0, -s * 0.28], {parent: vent, reg: false});
+    frame(rbox(0.09, 0.04, 0.03, 0.012), head, [s * 0.675, 0.53, 0.12], [0, s * 1.42, 0], M.pocket); // CIWS port on the visor
+    // temple sensor: a dark disc in a steel ring
+    const ts = node(head, [s * 0.5, 0.35, 0.7]);
+    ts.rotation.y = s * 1.0;
+    frame(cylZ(0.055, 0.06, 16), ts, [0, 0, 0], [0, 0, 0], M.pocket);
+    frame(new THREE.TorusGeometry(0.06, 0.016, 6, 18), ts, [0, 0, 0.025], [0, 0, 0], M.joint);
+    // ear: a shallow disc on the shell's side, three slits behind it
+    // ear plate: a raised panel on the shell's flat side with three slits and a yellow marker, and the ear knob ahead of it
+    HA(hull([[-0.6, 0.28], [-1.0, 0.3], [-1.08, 0.12], [-1.04, -0.12], [-0.62, -0.15]], 0.05, 0.015), 'white', [s * 0.862, 0, 0], [0, 0, 0], {reg: false});
+    for (let k = 0; k < 3; k++) frame(rbox(0.03, 0.13, 0.03, 0.008), head, [s * 0.882, 0.14, -0.86 - k * 0.06], [0, 0, 0], M.pocket);
+    HA(rbox(0.02, 0.035, 0.1, 0.006), 'yellow', [s * 0.885, 0.16, -0.7], [0, 0, 0], {asm: 'vfin', reg: false, edges: false});
+    HA(cylX(0.15, 0.06, 20), 'white', [s * 0.86, 0.04, -0.36], [0, 0, 0], {reg: false});
+    frame(cylX(0.055, 0.08, 16), head, [s * 0.86, 0.04, -0.36], [0, 0, 0], M.joint);
+    frame(rbox(0.12, 0.045, 0.05, 0.012), head, [s * 0.45, 0.33, -1.265], [0, s * 0.6, 0], M.pocket); // rear slots
   }
-  // ---------------------------------------------------------------- reference projection onto the head
-  // The reference's own pixels on the head (img2threejs projection-first fidelity): every head mesh gets a clone
-  // of its material that samples the de-lit front close-up on forward-facing surfaces and the side view on lateral
-  // ones, through the mesh's rest transform in head space, so the paint stays on each piece when it flies off.
-  const projected = [];
-  {
-    const loadTex = (src) => {
-      const img = new Image();
-      const t = new THREE.Texture(img);
-      img.onload = () => (t.needsUpdate = true);
-      img.src = src;
-      t.colorSpace = THREE.SRGBColorSpace;
-      t.anisotropy = 8;
-      return t;
-    };
-    const PU = {uFront: {value: loadTex(HEAD_FRONT)}, uSide: {value: loadTex(HEAD_SIDE)}, uF: {value: new THREE.Vector4(0.5, 259 / 724, 1 - 380 / 600, 259 / 600)}, uS: {value: new THREE.Vector4((160 - 0.86 * 158) / 480, 158 / 480, 1 - 296 / 480, 158 / 480)}, uPs: {value: 1}, uProj: {value: 1}};
-    head.updateWorldMatrix(true, true);
-    const inv = new THREE.Matrix4().copy(head.matrixWorld).invert();
-    const patch = (src, rest) => {
-      const m = src.clone();
-      const own = {uRest: {value: rest}};
-      m.onBeforeCompile = (sh) => {
-        Object.assign(sh.uniforms, PU, own);
-        sh.vertexShader = sh.vertexShader
-          .replace('#include <common>', '#include <common>\nuniform mat4 uRest; varying vec3 vHL; varying vec3 vHN;')
-          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvHL = (uRest * vec4(position, 1.0)).xyz; vHN = normalize(mat3(uRest) * normal);');
-        sh.fragmentShader = sh.fragmentShader
-          .replace('#include <common>', '#include <common>\nuniform sampler2D uFront; uniform sampler2D uSide; uniform vec4 uF; uniform vec4 uS; uniform float uPs; uniform float uProj; varying vec3 vHL; varying vec3 vHN;')
-          .replace('#include <map_fragment>', `#include <map_fragment>
-            {
-              vec3 hn = normalize(vHN);
-              vec2 uvF = vec2(uF.x + vHL.x * uF.y, uF.z + vHL.y * uF.w);
-              vec2 uvS = vec2(uS.x + vHL.z * uS.y, uS.z + vHL.y * uS.w);
-              float inF = step(0.0, uvF.x) * step(uvF.x, 1.0) * step(0.0, uvF.y) * step(uvF.y, 1.0);
-              float inS = step(0.0, uvS.x) * step(uvS.x, 1.0) * step(0.0, uvS.y) * step(uvS.y, 1.0);
-              float wF = smoothstep(0.05, 0.45, hn.z) * inF;
-              float wS = smoothstep(0.3, 0.75, abs(hn.x)) * inS * (1.0 - wF);
-              vec3 tF = texture2D(uFront, uvF).rgb;
-              // the reference's painted fins belong to the 3D fins, not the helmet: drop saturated yellow above the eyes
-              float yel = smoothstep(0.18, 0.35, min(tF.r, tF.g) - tF.b) * smoothstep(0.12, 0.22, vHL.y);
-              wF *= 1.0 - yel;
-              vec3 tS = texture2D(uSide, uvS).rgb;
-              vec3 g = vec3(0.3, 0.59, 0.11);
-              tF = mix(vec3(dot(tF, g)) * 0.62, tF, uPs);
-              tS = mix(vec3(dot(tS, g)) * 0.62, tS, uPs);
-              diffuseColor.rgb = mix(diffuseColor.rgb, tF, wF * uProj);
-            }`);
-      };
-      m.customProgramCacheKey = () => 'headproj-' + src.type;
-      return m;
-    };
-    head.traverse((o) => {
-      if (!o.isMesh || !(o.material.isMeshStandardMaterial) || o.userData.asm === 'vfin') return;
-      const rest = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld);
-      const src = o.material;
-      o.material = patch(src, rest);
-      projected.push({mat: o.material, src});
-      const a = armorMeshes.find((x) => x.mesh === o);
-      if (a) a.mat = o.material;
-    });
-    projected.PU = PU;
-    for (const e of eyes) e.visible = false; // the projected eyes carry the reference's own glow
-  }
+  frame(rbox(0.22, 0.2, 0.08, 0.02), head, [0, 0.8, -1.13], [0.5, 0, 0], M.pocket); // rear camera recess under the ridge tail
+  HA(rbox(0.1, 0.05, 0.22, 0.015), 'yellow', [0, 1.05, -1.25], [-0.28, 0, 0], {asm: 'vfin', reg: false}); // tail tip
   powerLine(neck, [0, -0.2, 0], [0, 0.7, 0], 0.05);
 
   // ============================================================ arms (built on the left, mirrored for the right)
@@ -775,24 +937,30 @@ export function buildFreedom() {
     // to a pointed outer tip, the underside cut on a long diagonal back to the arm, a red stripe along the outer top,
     // a blue marker on the diagonal face, a raised inner plate. Counter-rolled by the stand pose's 19 degrees so the
     // outline holds its reference orientation when standing.
-    const block = armor(prism([[-0.35, 1.25], [2.0, 1.5], [1.95, 0.95], [0.9, -0.3], [-0.3, -0.05]], 1.4, 0.12), 'white', sh, [0, 0, 0], [0, 0, -0.33], 'shoulder', {dist: 1.6});
-    armor(prism([[0.75, 1.4], [2.02, 1.54], [1.98, 1.4], [0.75, 1.27]], 1.36, 0.03), 'red', block, [0, 0, 0], [0, 0, 0], 'shoulder', {dist: 1.8}); // red stripe along the outer top
-    armor(rbox(0.12, 0.55, 0.42, 0.03), 'blue', block, [1.5, 0.45, 0.25], [0, 0, 0.85], 'shoulder', {dist: 1.8}); // blue marker on the diagonal face
-    for (const z of [0.72, -0.72]) armor(prism([[-0.05, 1.05], [1.3, 1.2], [1.1, 0.25], [0.15, 0.1]], 0.06, 0.02), 'white', block, [0, 0, z], [0, 0, 0], 'shoulder', {reg: false}); // raised inner plates
-    slot(block, [0.75, 0.62, 0.76], 0.7, 0.18, [0, 0, 0.1], 0, 0.04);
-    slot(block, [0.75, 0.62, -0.76], 0.7, 0.18, [0, PI, -0.1], 0, 0.04);
-    for (const [bx, by] of [[-0.15, 1.0], [1.6, 1.25], [1.05, 0.35], [0.15, 0.2]]) for (const z of [0.76, -0.76]) bolt(block, bx, by, z, z < 0 ? [0, PI, 0] : [0, 0, 0]);
+    const block = armor(prism([[-0.56, 1.05], [0.7, 1.12], [1.22, 0.8], [1.27, 0.35], [0.13, -0.5], [-0.5, -0.38]], 1.4, 0.12), 'white', sh, [0, 0, 0], [0, 0, -0.4], 'shoulder', {dist: 1.6});
+    armor(prism([[-0.56, 1.0], [-0.56, 1.31], [1.8, 1.5], [1.74, 1.12], [1.3, 0.82], [0.72, 1.02]], 1.3, 0.08), 'white', block, [0, 0, 0], [0, 0, 0], 'shoulder', {dist: 1.9}); // the top cap, run out to the wing tip
+    armor(prism([[0.8, 1.44], [1.81, 1.52], [1.77, 1.22], [1.0, 1.16]], 1.34, 0.03), 'red', block, [0, 0, 0], [0, 0, 0], 'shoulder', {dist: 2.1}); // red panel on the tip
+    {
+      const ring = node(block, [1.52, 0.7, 0.2]); // the blue frame hanging under the tip
+      ring.rotation.z = -0.6;
+      armor(rbox(0.2, 0.66, 0.56, 0.05), 'blue', ring, [0, 0, 0], [0, 0, 0], 'shoulder', {dist: 2.0});
+      frame(rbox(0.22, 0.42, 0.3, 0.03), ring, [0, 0, 0], [0, 0, 0], M.pocket);
+    }
+    for (const z of [0.72, -0.72]) armor(prism([[-0.4, 0.9], [0.62, 0.98], [1.05, 0.7], [1.08, 0.38], [0.12, -0.3], [-0.4, -0.22]], 0.06, 0.02), 'white', block, [0, 0, z], [0, 0, 0], 'shoulder', {reg: false}); // raised face plates
+    slot(block, [0.3, 0.55, 0.76], 0.7, 0.16, [0, 0, 0.06], 0, 0.04);
+    slot(block, [0.3, 0.55, -0.76], 0.7, 0.16, [0, PI, -0.06], 0, 0.04);
+    for (const [bx, by] of [[-0.3, 0.8], [0.95, 0.42], [-0.3, -0.12], [0.12, -0.2]]) for (const z of [0.76, -0.76]) bolt(block, bx, by, z, z < 0 ? [0, PI, 0] : [0, 0, 0]);
     frame(cyl(0.32, 0.36, SPEC.upperArm - 0.3, 12), sh, [0.1, -SPEC.upperArm / 2, 0]);
-    armor(taper(hull(inset([[0.52, -0.75], [0.6, -1.2], [0.56, -1.9], [-0.56, -1.9], [-0.62, -1.2], [-0.5, -0.75]], 0.11), 1.05, 0.2), 1, 1, 0.92, 1), 'white', sh, [0.1, 0, 0], [0, 0, 0], 'arm', {dist: 1.3});
+    armor(taper(hull(inset([[0.52, -0.4], [0.6, -0.8], [0.56, -1.4], [-0.56, -1.4], [-0.62, -0.8], [-0.5, -0.4]], 0.11), 1.05, 0.2), 1, 1, 0.92, 1), 'white', sh, [0.1, 0, 0], [0, 0, 0], 'arm', {dist: 1.3});
     const elbow = node(sh, [0.1, -SPEC.upperArm, 0], 'elbow');
     frame(cylX(0.34, 0.7, 22), elbow, [0, 0, 0], [0, 0, 0], M.joint);
-    frame(rbox(0.6, 0.55, 0.55, 0.08), elbow, [0, 0.0, -0.25], [0, 0, 0], M.frame); // the dark elbow block
+    frame(rbox(0.78, 0.8, 0.85, 0.1), elbow, [0, 0.0, -0.05], [0, 0, 0], M.joint); // the dark elbow block
     frame(cyl(0.3, 0.34, SPEC.foreArm - 0.5, 12), elbow, [0, -SPEC.foreArm / 2, 0]);
     // forearm: slim at the elbow, a deep cuff at the wrist
-    armor(taper(hull(inset([[0.5, -0.45], [0.68, -0.95], [0.66, -1.6], [-0.62, -1.6], [-0.7, -1.05], [-0.52, -0.45]], 0.1), 1.15, 0.2), 0.85, 1, 1.05, 1), 'white', elbow, [0, 0, 0], [0, 0, 0], 'arm', {dist: 1.4});
-    armor(rbox(1.45, 0.7, 1.35, 0.2), 'white', elbow, [0, -1.55, 0], [0, 0, 0], 'arm', {dist: 1.5}); // cuff
-    slot(elbow, [0.5, -1.3, 0], 0.35, 0.6, [0, PI / 2, 0], 0, 0.06);
-    piston(sh, [0.1, -1.3, 0.3], elbow, [0, -0.8, 0.32], 0.1);
+    armor(taper(hull(inset([[0.5, -0.5], [0.66, -1.2], [0.68, -2.1], [-0.64, -2.1], [-0.7, -1.3], [-0.52, -0.5]], 0.1), 1.15, 0.2), 0.85, 1, 1.05, 1), 'white', elbow, [0, 0, 0], [0, 0, 0], 'arm', {dist: 1.4});
+    armor(taper(rbox(1.45, 0.95, 1.35, 0.2), 0.88, 0.9, 1, 1), 'white', elbow, [0, -2.2, 0], [0, 0, 0], 'arm', {dist: 1.5}); // cuff
+    slot(elbow, [0.5, -1.7, 0], 0.35, 0.7, [0, PI / 2, 0], 0, 0.06);
+    piston(sh, [0.1, -0.9, 0.3], elbow, [0, -0.8, 0.32], 0.1);
     const wrist = node(elbow, [0, -SPEC.foreArm, 0], 'wrist');
     wrist.rotation.y = 0.5; // palm toward the thigh, fingers showing from the front
     frame(cyl(0.26, 0.26, 0.4, 14), wrist, [0, -0.05, 0], [0, 0, 0], M.joint);
@@ -800,13 +968,13 @@ export function buildFreedom() {
     armor(rbox(0.14, 0.7, 0.9, 0.04), 'white', wrist, [0.26, -0.58, 0], [0, 0, 0], 'arm', {dist: 1.0, reg: false}); // back-of-hand plate
     frame(cylZ(0.12, 1.0, 10), wrist, [-0.02, -1.08, 0], [0, 0, 0], M.joint); // knuckle bar
     {
-      const curl = 0.08; // open, splayed hands as on the reference
+      const curl = 0.32; // open, splayed hands as on the reference
       for (let f = 0; f < 4; f++) {
         let g = node(wrist, [-0.02, -1.08, 0.36 - f * 0.24]);
         g.rotation.x = (f - 1.5) * 0.1;
         [0.45, 0.36, 0.3].forEach((len, j) => {
           if (j) g.rotation.z = -curl;
-          else g.rotation.z = -0.05 - f * 0.04;
+          else g.rotation.z = -0.22 - f * 0.05;
           frame(rbox(0.22, len - 0.04, 0.22, 0.04), g, [0, -len / 2, 0], [0, 0, 0], M.frame);
           frame(cylZ(0.1, 0.24, 8), g, [0, 0, 0], [0, 0, 0], M.joint);
           g = node(g, [0, -len, 0]);
@@ -828,23 +996,45 @@ export function buildFreedom() {
 
   // ============================================================ backpack: navy, two thruster ports in hex mounts, a slatted centre vent
   const pack = node(waist, [0, SPEC.packY, SPEC.packZ], 'pack');
-  armor(taper(rbox(2.6, 3.3, 1.2, 0.16), 1, 1, 0.6, 1), 'navy', pack, [0, -0.3, 0], [0, 0, 0], 'pack', {dist: 1.4});
-  armor(rbox(1.4, 0.3, 0.6, 0.08), 'navy', pack, [0, 1.4, -0.1], [0, 0, 0], 'pack', {dist: 1.6});
-  slot(pack, [0, -0.25, -0.6], 0.95, 1.75, [0, PI, 0], 6, 0.14);
-  for (const y of [0.685, -1.185]) frame(rbox(1.19, 0.12, 0.12, 0.03), pack, [0, y, -0.63], [0, 0, 0], M.frame);
-  for (const x of [-0.535, 0.535]) frame(rbox(0.12, 1.99, 0.12, 0.03), pack, [x, -0.25, -0.63], [0, 0, 0], M.frame);
-  frame(rbox(2.0, 0.25, 1.0, 0.05), pack, [0, -1.85, 0], [0, 0, 0], M.frame);
+  // rebuilt from the backpack close-up: a tall centre column with a stepped cap and a lower block, a slatted vent in a
+  // thick light-grey frame, two side blocks carrying hex-mounted thruster ports, and two small ducted boxes below them
+  armor(rbox(1.35, 2.9, 1.3, 0.12), 'navy', pack, [0, -0.15, -0.1], [0, 0, 0], 'pack', {dist: 1.4}); // centre column
+  armor(rbox(1.0, 0.55, 1.15, 0.1), 'navy', pack, [0, 1.48, -0.05], [0, 0, 0], 'pack', {dist: 1.6}); // stepped cap
+  armor(rbox(0.85, 0.12, 0.08, 0.03), 'navy', pack, [0, 1.12, -0.77], [0, 0, 0], 'pack', {reg: false}); // cap lip
+  armor(rbox(1.05, 0.6, 1.1, 0.1), 'navy', pack, [0, -1.72, -0.05], [0, 0, 0], 'pack', {dist: 1.5}); // lower block
+  {
+    // the centre vent: a dark well in a thick rounded grey frame, four slats
+    const v = node(pack, [0, -0.05, -0.76]);
+    v.rotation.y = PI;
+    const w = 0.95;
+    const h = 1.6;
+    const t = 0.15;
+    frame(rbox(w - 0.08, h - 0.08, 0.2, 0.02), v, [0, 0, -0.06], [0, 0, 0], M.pocket);
+    for (const y of [h / 2 - t / 2, -h / 2 + t / 2]) armor(rbox(w, t, 0.24, 0.05), 'grey', v, [0, y, 0.04], [0, 0, 0], 'pack', {reg: false});
+    for (const x of [w / 2 - t / 2, -w / 2 + t / 2]) armor(rbox(t, h - 2 * t + 0.02, 0.24, 0.05), 'grey', v, [x, 0, 0.04], [0, 0, 0], 'pack', {reg: false});
+    for (let k = 0; k < 4; k++) armor(rbox(w - 2 * t, 0.13, 0.22, 0.04), 'grey', v, [0, -h / 2 + t + ((k + 0.5) * (h - 2 * t)) / 4, 0.0], [0.45, 0, 0], 'pack', {reg: false});
+  }
+  for (const [bx, by] of [[-0.4, 1.0], [0.4, 1.0], [-0.55, -1.0], [0.55, -1.0], [-0.35, -1.6], [0.35, -1.6]]) bolt(pack, bx, by, -0.77, [0, PI, 0]);
+  for (const hx of [-1.0, 1.0]) {
+    armor(rbox(0.78, 1.45, 1.05, 0.1), 'navy', pack, [hx * 0.98, 0.5, -0.05], [0, 0, 0], 'pack', {dist: 1.5}); // side block
+    armor(rbox(1.3, 0.5, 0.95, 0.08), 'navy', pack, [hx * 1.2, -0.42, -0.02], [0, 0, 0], 'pack', {dist: 1.5}); // its lower step
+    // a ducted box below the port, its mouth facing back
+    armor(rbox(0.7, 0.55, 0.8, 0.07), 'navy', pack, [hx * 1.05, -0.92, -0.12], [0, 0, 0], 'pack', {dist: 1.6});
+    frame(rbox(0.52, 0.34, 0.1, 0.02), pack, [hx * 1.05, -0.94, -0.5], [0, 0, 0], M.pocket);
+    frame(rbox(0.44, 0.05, 0.08, 0.01), pack, [hx * 1.05, -0.94, -0.52], [0, 0, 0], M.frame);
+    for (const by of [1.05, 0.0]) bolt(pack, hx * 0.98 + 0.25, by, -0.6, [0, PI, 0]);
+  }
   for (const hx of [-1.45, 1.45]) {
-    // side housings carry the ports, set wide as on the reference; the ports are dark bores that light under thrust
-    armor(rbox(0.8, 1.1, 1.0, 0.1), 'navy', pack, [hx, 0.45, -0.25], [0, 0, 0], 'pack', {dist: 1.5});
-    frame(new THREE.CylinderGeometry(0.44, 0.44, 0.5, 6).rotateX(PI / 2), pack, [hx, 0.45, -0.8], [0, 0, 0], M.frame);
-    frame(cylZ(0.28, 0.52, 20), pack, [hx, 0.45, -0.81], [0, 0, 0], M.pocket);
-    frame(new THREE.TorusGeometry(0.29, 0.05, 10, 28), pack, [hx, 0.45, -1.06], [0, 0, 0], M.steel);
-    const glow = frame(new THREE.CircleGeometry(0.22, 20), pack, [hx, 0.45, -0.95], [0, PI, 0], M.nozzle);
+    // thruster ports: a light-grey hex flange with six bolts, a dark bore that lights under thrust
+    armor(rbox(0.6, 1.0, 0.95, 0.08), 'navy', pack, [hx, 0.45, -0.2], [0, 0, 0], 'pack', {dist: 1.5});
+    frame(new THREE.CylinderGeometry(0.5, 0.5, 0.26, 6).rotateX(PI / 2).rotateZ(PI / 6), pack, [hx, 0.45, -0.78], [0, 0, 0], M.steel);
+    frame(cylZ(0.3, 0.3, 24), pack, [hx, 0.45, -0.86], [0, 0, 0], M.pocket);
+    frame(new THREE.TorusGeometry(0.3, 0.045, 10, 28), pack, [hx, 0.45, -0.92], [0, 0, 0], M.frame);
+    const glow = frame(new THREE.CircleGeometry(0.24, 20), pack, [hx, 0.45, -0.8], [0, PI, 0], M.nozzle);
     glow.castShadow = false;
-    for (let b = 0; b < 6; b++) bolt(pack, hx + Math.cos((b / 6) * PI * 2 + 0.52) * 0.38, 0.45 + Math.sin((b / 6) * PI * 2 + 0.52) * 0.38, -1.06);
+    for (let b = 0; b < 6; b++) bolt(pack, hx + Math.cos((b / 6) * PI * 2) * 0.4, 0.45 + Math.sin((b / 6) * PI * 2) * 0.4, -0.92, [0, PI, 0]);
     const plume = new THREE.Mesh(new THREE.ConeGeometry(0.22, 2.6, 16, 1, true).translate(0, 1.3, 0).rotateX(PI), M.plume);
-    plume.position.set(hx, 0.45, -1.06);
+    plume.position.set(hx, 0.45, -0.95);
     plume.rotation.x = 1.15; // exhaust back and down
     plume.renderOrder = 5;
     pack.add(plume);
@@ -992,7 +1182,8 @@ export function buildFreedom() {
     M.nozzle.color.setRGB(0.12 + 0.63 * th, 0.13 + 0.74 * th, 0.15 + 0.85 * th); // a dark bore at idle
     // eyes light with the phase shift
     const ps = mc.ps;
-    M.eye.color.setRGB(0.3 + 0.7 * ps, 0.16 + 0.42 * ps, 0.04 + 0.06 * ps); // glowing amber-orange, as on the reference
+    M.eye.color.setRGB(0.3 + 0.7 * ps, 0.16 + 0.56 * ps, 0.04 + 0.04 * ps);
+    M.eyeLow.color.setRGB(0.25 + 0.63 * ps, 0.12 + 0.3 * ps, 0.03 + 0.02 * ps); // glowing amber-orange, as on the reference
 
     // phase shift: the armor greys out when the PS power is off
     for (const k of PAINTS) {
@@ -1001,12 +1192,6 @@ export function buildFreedom() {
       M[k].roughness = BASE[k].r + 0.06 * (1 - ps);
       GLASS[k].color.copy(M[k].color);
     }
-    for (const P of projected) {
-      P.mat.color.copy(P.src.color);
-      P.mat.metalness = P.src.metalness;
-      P.mat.roughness = P.src.roughness;
-    }
-    projected.PU.uPs.value = ps;
     const xr = ops.xray ?? 0;
     const glass = xr > 0.02;
     if (glass !== glassOn) {
@@ -1058,11 +1243,11 @@ export function buildFreedom() {
 
   const wp = (o, x = 0, y = 0, z = 0) => o.localToWorld(new V3(x, y, z));
   const points = {
-    vfin: () => wp(head, 1.2, 1.2, 0.2),
+    vfin: () => wp(head, 1.0, 1.1, 0.3),
     eye: () => wp(head, 0.3, 0.03, 0.85),
-    ciws: () => wp(head, 0.82, 0.32, 0.1),
-    camera: () => wp(head, 0, 0.92, 0.8),
-    cheek: () => wp(head, 0.7, -0.08, 0.72),
+    ciws: () => wp(head, 0.72, 0.32, 0.1),
+    camera: () => wp(head, 0, 0.82, 0.98),
+    cheek: () => wp(head, 0.68, -0.08, 0.16),
     head: () => wp(head, 0, 0.3, 0.4),
     vent: () => wp(chest, 1.14, 0.13, 2.1),
     hatch: () => wp(hatchHinge, 0, 0.3, 0.3),
@@ -1070,17 +1255,17 @@ export function buildFreedom() {
     line: () => wp(chest, 1.6, 0.48, 0.05),
     wedge: () => wp(prow, 0, 0.6, 2.55),
     pack: () => wp(pack, 0, 0.9, -0.6),
-    port: (i = 1) => wp(pack, i ? 0.9 : -0.9, 0.35, -0.75),
-    packVent: () => wp(pack, 0, -0.25, -0.65),
+    port: (i = 1) => wp(pack, i ? 1.45 : -1.45, 0.45, -0.92),
+    packVent: () => wp(pack, 0, -0.05, -0.85),
     calf: (i = 1) => wp(legs[i].knee, 0, -4.2, -0.95),
     xiphias: (i = 1) => wp(xiph[i].fore, 0.25, -2.0, 0),
     xMount: (i = 1) => wp(xiph[i].pivot, 0.5, 0, 0),
     xMuzzle: (i = 1) => wp(xiph[i].muzzle),
     shoulder: (i = 1) => wp(arms[i].sh, 1.4, 1.1, 0.6),
     elbow: (i = 1) => wp(arms[i].elbow, 0, 0, 0.3),
-    knee: (i = 1) => wp(legs[i].knee, 0.9, 0, 0),
+    knee: (i = 1) => wp(legs[i].knee, 0.75, 0, 0),
     ankle: (i = 1) => wp(legs[i].ankle, 0, -0.5, 1.0),
-    foot: (i = 1) => wp(legs[i].ankle, 0, -2.0, 2.3),
+    foot: (i = 1) => wp(legs[i].ankle, 0, -2.2, 2.2),
     skirt: () => wp(body, 1.0, -0.8, 1.1),
   };
   return {group, body, update, points, materials: M, state};

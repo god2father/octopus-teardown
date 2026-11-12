@@ -14,11 +14,11 @@ export const SPEC = {
   shin: 5.45, // 5.15 m straight; the extra 0.09 m pays for the bent knee so the fin tip stays at 18.03 m
   ankle: 2.45, // ankle joint above the sole (ankle-guard top 3.1 m on the reference)
   waistY: 0.65, // waist joint above the pelvis centre
-  shoulderX: 2.2,
-  shoulderY: 2.95, // above the waist joint
+  shoulderX: 2.5,
+  shoulderY: 3.06, // above the waist joint
   neckY: 3.99,
-  upperArm: 2.2,
-  foreArm: 2.2,
+  upperArm: 1.7, // the elbow block sits 13.1 m up on the reference front view
+  foreArm: 2.8,
   hand: 2.0,
   packY: 2.75,
   packZ: -0.9,
@@ -91,9 +91,9 @@ export function cannonAt(dep) {
 
 // ------------------------------------------------------------ the body's three poses (degrees), blended
 // shoulder [pitch fwd, roll out], elbow, hip [pitch fwd, roll out], knee, ankle (toe down), waist [pitch, yaw]
-// stand is the reference's A-pose: legs splayed 13 degrees, arms out 19 degrees, hands open
+// stand is the reference's A-pose: legs splayed 13 degrees, arms out 23 degrees, hands open
 const POSE = {
-  stand: {sh: [[2, 19], [2, 19]], el: [14, 14], hip: [[13, 13], [13, 13]], kn: [24, 24], an: [-11, -11], waist: [0, 0], head: [0, 0]},
+  stand: {sh: [[2, 23], [2, 23]], el: [9, 9], hip: [[13, 13], [13, 13]], kn: [24, 24], an: [-11, -11], waist: [0, 0], head: [0, 0]},
   fly: {sh: [[-6, 22], [-2, 24]], el: [26, 32], hip: [[24, 11], [-4, 13]], kn: [50, 20], an: [26, 30], waist: [4, 0], head: [-4, 0]},
   burst: {sh: [[26, 26], [26, 26]], el: [48, 48], hip: [[12, 15], [-6, 15]], kn: [26, 14], an: [14, 18], waist: [6, 0], head: [-6, 0]},
 };
