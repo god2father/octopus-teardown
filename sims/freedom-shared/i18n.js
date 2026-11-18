@@ -158,7 +158,6 @@ const ZH = {
   'TWIN EYE': '双眼',
   'CHEST VENT': '胸部散热口',
   'COCKPIT HATCH': '驾驶舱门',
-  'BACKPACK': '背包',
   'WING ROOT': '翼根',
   'PIVOT': '枢轴',
   'BARREL': '炮管',

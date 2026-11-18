@@ -2,13 +2,14 @@
 // them against targets.json. Exit 0 pass, 1 fail. Usage: node img2/freedom/size-gate.mjs [--json out.json]
 import fs from 'node:fs';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {chromium} from '../../.claude/skills/teardown/node_modules/playwright/index.mjs';
+import {fileURLToPath, pathToFileURL} from 'node:url';
+import {CHROMIUM, CHROMIUM_ARGS, DIST, playwright} from '../../.claude/skills/teardown/paths.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const T = JSON.parse(fs.readFileSync(path.join(HERE, 'targets.json'), 'utf8')).targets;
-const b = await chromium.launch({args: ['--use-angle=metal']});
+const {chromium} = playwright();
+const b = await chromium.launch({executablePath: CHROMIUM, args: CHROMIUM_ARGS});
 const p = await b.newPage({viewport: {width: 800, height: 450}});
-await p.goto('file://' + path.resolve(HERE, '../../teardown-out/dist/freedom-film.html'));
+await p.goto(pathToFileURL(path.join(DIST, 'freedom-film.html')).href);
 await p.waitForFunction(() => window.SIM && window.SIM.ready, null, {timeout: 60000});
 const SLICES = [...new Set(T.filter((t) => t.widthAtY !== undefined).map((t) => t.widthAtY))];
 const groups = await p.evaluate((SLICES) => {

@@ -19,7 +19,14 @@ const LEVEL_OF = {head: 'head', pack: 'pack', reactor: 'reactor', railgun: 'rail
 
 const CSS = `
 html,body{background:${BG};overflow:hidden}
-#app{position:absolute!important;inset:auto!important;left:0;top:0;width:${W}px;height:${H}px;transform-origin:0 0}
+#app{position:fixed;inset:0}
+.live-console{position:absolute;left:0;top:0;width:${W}px;height:${H}px;transform-origin:0 0;pointer-events:none}
+.hud-top-left{translate:calc(-1 * var(--edge-x)) calc(-1 * var(--edge-y))}
+.hud-top-right{translate:var(--edge-x) calc(-1 * var(--edge-y))}
+.hud-top{translate:0 calc(-1 * var(--edge-y))}
+.hud-bottom-left{translate:calc(-1 * var(--edge-x)) var(--edge-y)}
+.hud-bottom-right{translate:var(--edge-x) var(--edge-y)}
+.hud-bottom{translate:0 var(--edge-y)}
 #gl{touch-action:none;cursor:grab}
 #gl.drag{cursor:grabbing}
 .bt{pointer-events:auto;cursor:pointer}
@@ -40,8 +47,11 @@ export function runLive() {
   canvas.id = 'gl';
   app.appendChild(canvas);
   const st = createStage({canvas});
-  const ui = createConsole(app);
-  const tourCursorAt = makeCursor(ui);
+  const overlay = document.createElement('div');
+  overlay.className = 'live-console';
+  app.appendChild(overlay);
+  const ui = createConsole(overlay);
+  let tourCursorAt;
 
   const TIERS = [
     {samples: 4, shadow: 2048, ao: 12, pr: 2},
@@ -51,10 +61,19 @@ export function runLive() {
   const light = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 700;
   let tier = light ? 2 : 0;
   let scale = 1;
+  let left = 0;
+  let top = 0;
   const fit = () => {
-    scale = Math.min(innerWidth / W, innerHeight / H);
-    app.style.transform = `translate(${(innerWidth - W * scale) / 2}px, ${(innerHeight - H * scale) / 2}px) scale(${scale})`;
-    st.resize(W, H, clamp((devicePixelRatio || 1) * scale, 0.75, TIERS[tier].pr));
+    const width = app.clientWidth;
+    const height = app.clientHeight;
+    scale = Math.min(width / W, height / H);
+    left = (width - W * scale) / 2;
+    top = (height - H * scale) / 2;
+    overlay.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
+    ui.layout(left / scale, top / scale);
+    tourCursorAt = makeCursor(ui);
+    st.camera.zoom = H * scale / height;
+    st.resize(width, height, clamp(devicePixelRatio || 1, 0.75, TIERS[tier].pr));
   };
   const applyTier = () => {
     const {pr, ...q} = TIERS[tier];
@@ -65,7 +84,7 @@ export function runLive() {
   addEventListener('resize', fit);
 
   const tourChip = document.createElement('div');
-  tourChip.className = 'tourchip';
+  tourChip.className = 'tourchip hud-top';
   ui.root.appendChild(tourChip);
 
   // ------------------------------------------------------------ the visitor's state
@@ -88,7 +107,13 @@ export function runLive() {
     while (i > 0 && hist[i].t > t) i--;
     return hist[i].S;
   };
-  const frameConsole = makeConsoleFrame(ui, st, histAt);
+  const frameConsole = makeConsoleFrame(ui, {
+    robot: st.robot,
+    project(point) {
+      const p = st.project(point);
+      return p && [(p[0] - left) / scale, (p[1] - top) / scale];
+    },
+  }, histAt);
   const pulse = (key) => {
     ring = {t: T, x: ui.spots[key][0], y: ui.spots[key][1]};
   };
@@ -257,7 +282,10 @@ export function runLive() {
     cam.az += dAz * k;
     for (const key of ['tx', 'ty', 'tz', 'el', 'd', 'sx', 'sy']) cam[key] += (v[key] - cam[key]) * k;
     const swing = Math.min(1, Math.abs(dAz) / 90);
-    st.frame(simT, {...cam, el: (cam.el + 8 * swing) * D2R, az: cam.az * D2R, d: cam.d + 1.5 * swing}, opsOf(S));
+    st.frame(simT, {
+      ...cam, el: (cam.el + 8 * swing) * D2R, az: cam.az * D2R, d: cam.d + 1.5 * swing,
+      sx: cam.sx * scale, sy: cam.sy * scale,
+    }, opsOf(S));
 
     odd = !odd;
     if (tier > 0 && odd) ui.pointer(cursor);

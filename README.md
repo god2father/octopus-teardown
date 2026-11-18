@@ -54,6 +54,7 @@ DISPLAY：`L` 标注 · `E` 爆炸图 · `M` 运动模糊 · `T` 转台 · 空�
 
 ```bash
 npm run build:freedom   # → teardown-out/dist/freedom-live.html 与 freedom-film.html
+npm run dev:freedom     # → http://127.0.0.1:8791/，修改源码后刷新页面
 npm run open:freedom    # 打开交互页面
 npm run video:freedom   # 录 35 秒 60fps 影片并配乐 → teardown-out/freedom.mp4（需要 ffmpeg）
 node img2/freedom/size-gate.mjs   # 尺寸检查：38 项部件尺寸对照参考图（img2/freedom/targets.json）

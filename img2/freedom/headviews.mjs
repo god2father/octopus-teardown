@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {CHROMIUM, CHROMIUM_ARGS, DIST, playwright} from '/Users/congt/workspace/octopus-teardown/.claude/skills/teardown/paths.mjs';
+import {CHROMIUM, CHROMIUM_ARGS, DIST, playwright} from '../../.claude/skills/teardown/paths.mjs';
 
 const out = process.argv[2];
 const proj = Number(process.argv[3] ?? 1);

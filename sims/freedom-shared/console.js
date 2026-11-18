@@ -57,8 +57,10 @@ export function createConsole(app) {
   document.head.appendChild(style);
   const ui = el(`<div class="ui"></div>`);
   app.appendChild(ui);
+  let anchor = '';
   const add = (h) => {
     const n = el(h);
+    if (anchor) n.classList.add('hud-' + anchor);
     ui.appendChild(n);
     return n;
   };
@@ -69,12 +71,14 @@ export function createConsole(app) {
   };
 
   // ------------------------------------------------------------ header
+  anchor = 'top-left';
   add(`<div style="position:absolute;left:0;top:0;width:160px;height:88px;background:${C.accent};display:flex;align-items:center;gap:12px;padding-left:20px;color:#fff">
     <svg width="38" height="30" viewBox="0 0 38 30" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 22l-3-8h6z"/><path d="M17 14L6 3M21 14L32 3"/><path d="M15 18L2 14M15 20L3 22M15 22L6 28M23 18l13-4M23 20l12 2M23 22l9 6"/></svg>
     <span style="font-size:14px;font-weight:700;letter-spacing:2px">X10A</span></div>`);
   add(`<div class="lb" style="position:absolute;left:182px;top:18px;letter-spacing:1.8px">${bi('MOBILE SUIT')} · ${bi('NUCLEAR-POWERED')}</div>`);
   add(`<div class="big" style="position:absolute;left:180px;top:32px;font-size:31px;font-weight:600;letter-spacing:-.3px">Freedom <span style="color:${C.mute};font-weight:400;font-size:22px">ZGMF-X10A</span> <span style="color:${C.accent};font-weight:400">/</span></div>`);
   add(`<div class="lb" style="position:absolute;left:182px;top:76px;letter-spacing:1.8px">${bi('HIGH-MOBILITY')} / ${bi('TEARDOWN SIMULATOR')}</div>`);
+  anchor = 'top';
   add(`<div class="lb" style="position:absolute;left:700px;top:18px">${bi('REACTOR LOAD')}</div>`);
   const loadPct = add(`<div class="vl" style="position:absolute;left:1000px;top:16px;width:44px;text-align:right;font-size:9px"></div>`);
   const loadBar = add(`<svg style="position:absolute;left:700px;top:32px" width="344" height="14"></svg>`);
@@ -82,17 +86,22 @@ export function createConsole(app) {
   add(`<svg style="position:absolute;left:640px;top:82px" width="340" height="12">${Array.from({length: 14}, (_, i) => `<path d="M${i * 24 + 6} 6h6M${i * 24 + 9} 3v6" stroke="${C.accent}" stroke-width="1" opacity=".55"/>`).join('')}</svg>`);
   const hdrCols = [[1085, 'SIM ID', 'X10A-FT01'], [1203, 'RUNTIME', ''], [1318, 'STATUS', ''], [1440, 'PILOT', 'FAN BUILD']];
   const H = {};
+  anchor = 'top-right';
   for (const [x, k, v] of hdrCols) {
     add(`<div style="position:absolute;left:${x - 14}px;top:16px;width:1px;height:44px;background:${C.line}"></div>`);
     add(`<div class="lb" style="position:absolute;left:${x}px;top:18px">${bi(k)}</div>`);
     H[k] = add(`<div class="vl" style="position:absolute;left:${x}px;top:40px">${v}</div>`);
   }
+  anchor = 'top';
   add(`<div class="lb" style="position:absolute;left:345px;top:120px">${bi('MODEL')} ZGMF-X10A · ${SPEC.height} M · ${SPEC.mass} T</div>`);
   const isoTag = add(`<div class="lb" style="position:absolute;left:1000px;width:256px;text-align:right;top:120px"></div>`);
+  anchor = 'bottom-left';
   add(`<div class="lb" style="position:absolute;left:25px;top:878px;letter-spacing:1.6px">${bi('FAN TRIBUTE')} &nbsp;·&nbsp; ${bi('PROCEDURAL MODEL')} &nbsp;·&nbsp; 2 ${bi('RAIL CANNON')} &nbsp;·&nbsp; 22 ${bi('JOINTS')}</div>`);
+  anchor = 'bottom-right';
   add(`<div class="lb" style="position:absolute;right:25px;top:878px;letter-spacing:1.6px">${bi('PERSONAL BUILD')} &nbsp;·&nbsp; ${bi('NOT FOR DISTRIBUTION')} <span style="color:${C.accent}">//////</span></div>`);
 
   // ------------------------------------------------------------ REACTOR OUTPUT
+  anchor = 'top-left';
   const LX = 25;
   const LW = 287;
   panel(LX, 108, LW, 227, 'REACTOR OUTPUT', '01');
@@ -125,6 +134,7 @@ export function createConsole(app) {
   );
 
   // ------------------------------------------------------------ FLIGHT
+  anchor = 'top-right';
   const RX = 1288;
   const RW = 287;
   panel(RX, 108, RW, 195, 'FLIGHT', '04');
@@ -166,6 +176,7 @@ export function createConsole(app) {
   );
 
   // ------------------------------------------------------------ OPERATION LOG
+  anchor = 'bottom';
   const OL = {x: 330, y: 762, w: 938, h: 96};
   add(`<div class="pn" style="left:${OL.x}px;top:${OL.y}px;width:${OL.w}px;height:${OL.h}px"></div>`);
   add(`<div class="hd" style="left:${OL.x + 14}px;top:${OL.y + 12}px">${bi('OPERATION LOG')}</div>`);
@@ -180,6 +191,7 @@ export function createConsole(app) {
   const logCount = add(`<div class="lb" style="position:absolute;left:${TR.x + TR.w - 200}px;width:200px;text-align:right;top:${OL.y + 74}px"></div>`);
 
   // ------------------------------------------------------------ flight mode, over the scene
+  anchor = '';
   const mode = add(`<div style="position:absolute;left:345px;top:640px">
     <div class="lb">${bi('FLIGHT MODE')}</div>
     <div class="big" data-m="name" style="font-size:31px;font-weight:600;color:${C.accent};margin-top:5px;letter-spacing:-.2px"></div>
@@ -201,8 +213,16 @@ export function createConsole(app) {
     return [(r.left - a.left + r.width / 2) / s, (r.top - a.top + r.height / 2) / s];
   };
   const spots = Object.fromEntries(Object.entries(btn).map(([k, n]) => [k, centre(n)]));
+  let edgeX = 0;
+  let edgeY = 0;
   const PANELS = [[0, 0, 1600, 98], [LX, 108, LX + LW, 662], [RX, 108, RX + RW, 782], [OL.x, OL.y, OL.x + OL.w, OL.y + OL.h], [340, 632, 640, 742]];
-  const covered = (x, y, pad = 8) => PANELS.some(([a, b, c, d]) => x > a - pad && x < c + pad && y > b - pad && y < d + pad);
+  const covered = (x, y, pad = 8) => {
+    const offsets = [[0, -edgeY], [-edgeX, -edgeY], [edgeX, -edgeY], [0, edgeY], [0, 0]];
+    return PANELS.some(([a, b, c, d], i) => {
+      const [dx, dy] = offsets[i];
+      return x > a + dx - pad && x < c + dx + pad && y > b + dy - pad && y < d + dy + pad;
+    });
+  };
 
   const pointer = (c) => {
     cur.style.display = c.x < 0 ? 'none' : 'block';
@@ -222,6 +242,13 @@ export function createConsole(app) {
     spots,
     btn,
     root: ui,
+    layout(x, y) {
+      edgeX = x;
+      edgeY = y;
+      app.style.setProperty('--edge-x', `${x}px`);
+      app.style.setProperty('--edge-y', `${y}px`);
+      for (const [key, element] of Object.entries(btn)) spots[key] = centre(element);
+    },
     covered,
     pointer,
     update(s) {

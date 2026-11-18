@@ -254,7 +254,7 @@ function flowTexture() {
 // scratches and scuffs. Three maps from one layout: colour (grime in the seams, wear), bump (engraved seams, raised
 // rivets) and roughness (seams and scuffs rougher, polished wear lighter), so the paint reads as worked metal.
 const TILE = 2.4;
-function panelMaps(seed) {
+function panelMaps(seed, {withSeams = true, wear = 1} = {}) {
   const N = 1024;
   const r = rng(seed);
   const mk = (fill) => {
@@ -267,7 +267,7 @@ function panelMaps(seed) {
   };
   const [cc, cg] = mk('#ffffff');
   const [bc, bg] = mk('#808080');
-  const [rc, rg] = mk('#6e6e6e');
+  const [rc, rg] = mk('#d6d6d6');
   // scuffs and wear first, under the seams
   for (let i = 0; i < 900; i++) {
     const x = r() * N;
@@ -275,7 +275,7 @@ function panelMaps(seed) {
     const a = r() * Math.PI;
     const l = 4 + r() * 40;
     const g = r();
-    cg.strokeStyle = g < 0.7 ? `rgba(60,62,68,${0.04 + 0.08 * r()})` : `rgba(255,255,255,${0.2 * r()})`;
+    cg.strokeStyle = g < 0.7 ? `rgba(60,62,68,${wear * (0.04 + 0.08 * r())})` : `rgba(255,255,255,${wear * 0.2 * r()})`;
     rg.strokeStyle = g < 0.7 ? `rgba(160,160,160,${0.25 * r()})` : `rgba(60,60,60,${0.3 * r()})`;
     for (const [ctx, w] of [[cg, 0.6 + r() * 1.2], [rg, 1.5]]) {
       ctx.lineWidth = w;
@@ -290,7 +290,7 @@ function panelMaps(seed) {
     const y = r() * N;
     const rr = 6 + r() * 30;
     const gr = cg.createRadialGradient(x, y, 0, x, y, rr);
-    gr.addColorStop(0, `rgba(70,72,78,${0.05 + 0.07 * r()})`);
+    gr.addColorStop(0, `rgba(70,72,78,${wear * (0.05 + 0.07 * r())})`);
     gr.addColorStop(1, 'rgba(70,72,78,0)');
     cg.fillStyle = gr;
     cg.fillRect(x - rr, y - rr, rr * 2, rr * 2);
@@ -327,8 +327,10 @@ function panelMaps(seed) {
   function rivet(x, y) {
     rivets.push([x, y]);
   }
-  seams.push([0, 0, N, 0], [0, 0, 0, N]);
-  split(0, 0, N, N, 0);
+  if (withSeams) {
+    seams.push([0, 0, N, 0], [0, 0, 0, N]);
+    split(0, 0, N, N, 0);
+  }
   for (const [x0, y0, x1, y1] of seams) {
     for (const [ctx, col, w] of [[cg, 'rgba(38,40,46,.62)', 2.2], [bg, '#2a2a2a', 3.2], [rg, '#b4b4b4', 3]]) {
       ctx.strokeStyle = col;
@@ -376,7 +378,7 @@ function brushedMaps(seed) {
   const c = document.createElement('canvas');
   c.width = c.height = N;
   const g = c.getContext('2d');
-  g.fillStyle = '#7a7a7a';
+  g.fillStyle = '#c4c4c4';
   g.fillRect(0, 0, N, N);
   for (let i = 0; i < 2600; i++) {
     const y = r() * N;
@@ -417,23 +419,23 @@ function boxUV(g, tile = TILE, off = 0) {
 
 export function buildFreedom() {
   const R = rng(23);
-  // metallic paint over metal: a satin lacquer (clearcoat) on a base with some metal in it, the panel maps on top
+  // Matte painted plates and exposed brushed metal need different reflection strengths.
   const PM = panelMaps(41);
   const BR = brushedMaps(7);
   const paint = (color, o = {}) =>
-    new THREE.MeshPhysicalMaterial({color, map: PM.map, bumpMap: PM.bump, bumpScale: 2.2, roughnessMap: PM.rough, roughness: 0.62, metalness: 0.32, clearcoat: 0.55, clearcoatRoughness: 0.22, envMapIntensity: 1.0, ...o});
-  const metal = (color, o = {}) => new THREE.MeshPhysicalMaterial({color, roughness: 0.42, roughnessMap: BR, bumpMap: BR, bumpScale: 0.6, metalness: 1, envMapIntensity: 1.1, clearcoat: 0.2, clearcoatRoughness: 0.4, ...o});
+    new THREE.MeshPhysicalMaterial({color, map: PM.map, bumpMap: PM.bump, bumpScale: 1.15, roughnessMap: PM.rough, roughness: 0.78, metalness: 0.3, envMapIntensity: 0.68, ...o});
+  const metal = (color, o = {}) => new THREE.MeshPhysicalMaterial({color, roughness: 0.62, roughnessMap: BR, bumpMap: BR, bumpScale: 0.27, metalness: 0.93, envMapIntensity: 1.15, ...o});
   const M = {
-    white: paint(COLORS.white, {roughness: 0.58}),
-    grey: paint(COLORS.grey, {metalness: 0.6, roughness: 0.55}),
+    white: paint(COLORS.white, {roughness: 0.84}),
+    grey: paint(COLORS.grey, {metalness: 0.59, roughness: 0.76}),
     navy: paint(COLORS.navy, {metalness: 0.45}),
     blue: paint(COLORS.blue, {metalness: 0.4}),
     red: paint(COLORS.red, {metalness: 0.38}),
-    yellow: paint(COLORS.yellow, {metalness: 0.55, roughness: 0.42}),
-    dark: paint(COLORS.dark, {metalness: 0.7, roughness: 0.6}),
-    frame: metal('#72767d', {metalness: 0.55}),
-    joint: metal('#686c74', {roughness: 0.55, metalness: 0.35}),
-    steel: metal('#b9bec5', {roughness: 0.22, bumpScale: 0.3}),
+    yellow: paint(COLORS.yellow, {metalness: 0.63, roughness: 0.66}),
+    dark: paint(COLORS.dark, {metalness: 0.7, roughness: 0.78}),
+    frame: metal('#858992'),
+    joint: metal('#7b818b', {roughness: 0.69, metalness: 0.85}),
+    steel: metal('#b9bec5', {roughness: 0.49}),
         eye: new THREE.MeshBasicMaterial({color: '#ffc23a', toneMapped: false}),
     socket: new THREE.MeshBasicMaterial({color: '#1b1410'}),
     eyeLow: new THREE.MeshBasicMaterial({color: '#e07a12', toneMapped: false}),
@@ -475,7 +477,7 @@ export function buildFreedom() {
   /** an armor piece: painted mesh with an ink panel line, registered for the teardown */
   const armor = (geo, key, parent, pos, rot = [0, 0, 0], asm = 'armor', opt = {}) => {
     boxUV(geo, TILE, R());
-    const m = shadowy(new THREE.Mesh(geo, M[key]));
+    const m = shadowy(new THREE.Mesh(geo, opt.material ?? M[key]));
     m.userData.asm = asm;
     m.position.set(...pos);
     m.rotation.set(...rot);
@@ -575,8 +577,28 @@ export function buildFreedom() {
     slot(skirts[s], [s * 0.3, -0.6, -0.15], 0.3, 0.5, [0, s * PI / 2, 0], 0, 0.06);
   }
   // rear skirt: two panels in a V either side of a dark centre slot; a white rear-waist plate above them
-  for (const s of [-1, 1]) armor(prism([[0.12, 0], [1.25, 0], [1.4, -1.5], [0.7, -3.0], [0.12, -2.6]].map(([x, y]) => [x * s, y]), 0.28, 0.07), 'white', body, [0, 1.2, -0.86], [0.3, 0, 0], 'skirt', {dist: 1.5});
+  const rearSkirtRing = (s, y, inner, ridge, outer, back) => [
+    [s * inner, y, back + 0.16], [s * ridge, y, back],
+    [s * outer, y, back + 0.18], [s * outer, y, back + 0.31],
+    [s * inner, y, back + 0.31],
+  ];
+  for (const s of [-1, 1]) {
+    const shell = smoothLoft([
+      rearSkirtRing(s, 0, 0.19, 0.72, 1.18, -0.14),
+      rearSkirtRing(s, -0.55, 0.18, 0.74, 1.29, -0.21),
+      rearSkirtRing(s, -1.48, 0.25, 0.85, 1.32, -0.25),
+      rearSkirtRing(s, -2.42, 0.43, 0.85, 1.06, -0.17),
+      rearSkirtRing(s, -2.91, 0.67, 0.75, 0.83, -0.11),
+    ], 1, 1, true, true, 0.045);
+    const panel = armor(facet(shell), 'white', body, [0, 1.2, -0.86], [0.24, 0, 0], 'skirt', {dist: 1.5, edgeAngle: 32});
+    bolt(panel, s * 0.5, -0.42, -0.18, [0, PI, 0]);
+    bolt(panel, s * 1.07, -0.63, -0.16, [0, PI, 0]);
+  }
   frame(rbox(0.22, 2.4, 0.2, 0.04), body, [0, 0.05, -0.98], [0.3, 0, 0], M.pocket);
+  const rearWaistCover = armor(prism([
+    [-0.22, 0], [0.22, 0], [0.24, -1.32], [0.17, -1.73], [-0.17, -1.73], [-0.24, -1.32],
+  ], 0.17, 0.032), 'white', body, [0, 1.12, -1.08], [0.21, 0, 0], 'skirt', {dist: 1.35});
+  slot(rearWaistCover, [0, -0.38, -0.093], 0.22, 0.28, [0, PI, 0], 0, 0.04);
   armor(rbox(1.8, 0.7, 0.3, 0.08), 'white', body, [0, SPEC.waistY + 0.3, -0.75], [0, 0, 0], 'waist', {dist: 1.3});
 
   // ============================================================ legs (built on the suit's left, +x; mirrored for the right)
@@ -589,12 +611,24 @@ export function buildFreedom() {
     frame(new THREE.SphereGeometry(0.62, 22, 14), hip, [0, 0, 0], [0, 0, 0], M.joint);
     frame(cyl(0.36, 0.42, SPEC.thigh - 0.5, 14), hip, [0, -SPEC.thigh / 2, 0]);
     // thigh: short and deep, most of it under the skirts
-    armor(taper(hull(inset([[0.6, -0.5], [1.0, -1.1], [0.98, -2.2], [0.7, -2.65], [-0.7, -2.65], [-1.0, -2.0], [-0.95, -0.9], [-0.55, -0.5]], 0.08), 1.3, 0.2), 1.0, 1, 0.9, 1), 'white', hip, [0.02, 0, 0], [0, 0, 0], 'leg', {dist: 1.4});
+    const thighRing = (y, w, front, back) => [
+      [-w * 0.52, y, front], [w * 0.47, y, front],
+      [w, y, front - 0.42], [w * 0.88, y, back + 0.32],
+      [w * 0.43, y, back], [-w * 0.53, y, back],
+      [-w * 0.94, y, back + 0.28], [-w, y, front - 0.38],
+    ];
+    armor(facet(smoothLoft([
+      thighRing(-0.48, 0.48, 0.64, -0.55),
+      thighRing(-0.94, 0.74, 0.98, -0.92),
+      thighRing(-1.58, 0.71, 1.01, -1.07),
+      thighRing(-2.15, 0.62, 0.93, -1.02),
+      thighRing(-2.57, 0.47, 0.67, -0.72),
+    ], 1, 1, true, true, 0.05)), 'white', hip, [0.02, 0, 0], [0, 0, 0], 'leg', {dist: 1.4, edgeAngle: 35});
     armor(prism([[-0.5, 0.75], [0.5, 0.75], [0.56, -0.2], [0.4, -0.95], [-0.4, -0.95], [-0.56, -0.2]], 0.22, 0.06), 'white', hip, [0.02, -1.55, 1.04], [0, 0, 0], 'leg', {dist: 1.6});
     frame(rbox(0.6, 0.9, 0.08, 0.02), hip, [0, -1.9, -1.14], [0, 0, 0], M.frame);
     for (const y of [-1.7, -2.1]) frame(rbox(0.4, 0.12, 0.06, 0.015), hip, [0, y, -1.19], [0, 0, 0], M.pocket);
     frame(rbox(0.5, 0.5, 0.3, 0.05), hip, [0, -2.45, -0.95], [0, 0, 0], M.frame);
-    slot(hip, [0.78, -1.6, 0], 0.45, 0.7, [0, PI / 2, 0], 3, 0.08);
+    slot(hip, [0.71, -1.6, 0], 0.45, 0.7, [0, PI / 2, -0.09], 3, 0.08);
     const knee = node(hip, [0, -SPEC.thigh, 0], 'knee');
     frame(cylX(0.58, 1.3, 24), knee, [0, 0, 0], [0, 0, 0], M.joint);
     frame(rbox(0.9, 0.55, 0.5, 0.06), knee, [0, 0.15, 0.75], [0, 0, 0], M.joint); // the dark knee block the reference shows above the guard
@@ -609,7 +643,7 @@ export function buildFreedom() {
     const kg = (y, w, zF) => [[-w, y, -0.5], [-w, y, zF - 0.32], [-w * 0.5, y, zF], [w * 0.5, y, zF], [w, y, zF - 0.32], [w, y, -0.5]];
     armor(facet(smoothLoft([kg(-0.4, 0.8, 0.3), kg(-1.0, 1.03, 0.45), kg(-1.9, 1.06, 0.45), kg(-2.45, 0.85, 0.35), kg(-2.75, 0.5, 0.2)], 1, 1, true, true, 0.06)), 'white', knee, [0, 0, -0.1], [0, 0, 0], 'knee', {dist: 1.6, edgeAngle: 40}); // the calf armour wrapping round behind the shield
     armor(facet(smoothLoft([kg(0.62, 0.34, 0.6), kg(-0.3, 0.6, 0.8), kg(-1.1, 0.84, 0.87), kg(-1.8, 0.88, 0.85), kg(-2.35, 0.66, 0.74), kg(-2.7, 0.22, 0.58)], 1, 1, true, true, 0.06)), 'white', knee, [0, 0, 0], [0, 0, 0], 'knee', {dist: 1.8, edgeAngle: 40}); // a teardrop shield: narrow top, widest two thirds down, a point below
-    armor(prism([[-0.26, 0.15], [0.26, 0.15], [0.5, -0.6], [0.56, -1.6], [0.36, -2.05], [0, -2.3], [-0.36, -2.05], [-0.56, -1.6], [-0.5, -0.6]], 0.3, 0.06), 'white', knee, [0, 0, 0.87], [-0.03, 0, 0], 'knee', {dist: 2.0});
+    armor(prism([[-0.29, 0.15], [0.29, 0.15], [0.58, -0.51], [0.53, -1.58], [0.31, -2.02], [0, -2.32], [-0.31, -2.02], [-0.53, -1.58], [-0.58, -0.51]], 0.3, 0.038), 'white', knee, [0, 0, 0.87], [-0.03, 0, 0], 'knee', {dist: 2.0});
     slot(knee, [0, -1.1, 1.07], 0.3, 1.1, [-0.03, 0, 0], 0, 0.1);
     for (const [bx, by] of [[-0.48, -0.3], [0.48, -0.3], [-0.5, -1.25], [0.5, -1.25]]) bolt(knee, bx, by, 1.04);
     // the shin below it: narrower, the calf thruster behind
@@ -785,40 +819,51 @@ export function buildFreedom() {
   // crown ridge, the red beak crest, diamond-section V-fins, a ridged mask, tall cheek guards and yawed side vents.
   const head = node(neck, [0, 0.82, -0.08], 'head');
   const mir = (half) => [...half, ...half.slice().reverse().filter((p) => Math.abs(p[0]) > 1e-6).map(([x, y, z]) => [-x, y, z])];
-  const HA = (geo, key, pos = [0, 0, 0], rot = [0, 0, 0], opt = {}) => armor(geo, key, opt.parent ?? head, pos, rot, opt.asm ?? 'head', {dist: 1.4, ...opt});
+  const headMaps = panelMaps(47, {withSeams: false, wear: 0.45});
+  const headPaints = Object.fromEntries(['white', 'red', 'yellow'].map((key) => [
+    key, Object.assign(M[key].clone(), {
+      map: headMaps.map, bumpMap: headMaps.bump, roughnessMap: headMaps.rough, bumpScale: 0.35,
+    }),
+  ]));
+  const HA = (geo, key, pos = [0, 0, 0], rot = [0, 0, 0], opt = {}) =>
+    armor(geo, key, opt.parent ?? head, pos, rot, opt.asm ?? 'head', {
+      dist: 1.4, material: headPaints[key], ...opt,
+    });
   // helmet dome: a crowned shell, 1.08 m above the eyes on the centre line, 0.95 m beside the tower, 1.32 m wide at
   // the temples in front (close-up outline) and widening behind so it runs into the ear shell at the back (rear view)
   const domeRing = (z, yC, yT, wT, wS, yS, wM, yM, yB = 0.2) => mir([[wM, yB, z], [wM, yM, z], [wS, yS, z], [wT, yT, z], [0, yC, z]]);
   const domeM = HA(smoothLoft([
     domeRing(0.95, 0.5, 0.48, 0.16, 0.22, 0.42, 0.26, 0.32, 0.16), // the visor: its lower edge is the brow diagonal of the side view
     domeRing(0.84, 0.58, 0.56, 0.2, 0.32, 0.47, 0.44, 0.36, 0.14),
-    domeRing(0.45, 0.95, 0.88, 0.25, 0.46, 0.72, 0.62, 0.5, 0.28),
-    domeRing(0.05, 0.98, 0.93, 0.27, 0.52, 0.8, 0.68, 0.62, 0.42),
-    domeRing(-0.5, 1.0, 0.95, 0.28, 0.54, 0.84, 0.66, 0.64, 0.4),
-    domeRing(-0.95, 0.94, 0.88, 0.3, 0.52, 0.8, 0.62, 0.62, 0.4),
-    domeRing(-1.2, 0.78, 0.7, 0.24, 0.44, 0.64, 0.52, 0.5, 0.3),
-    domeRing(-1.29, 0.56, 0.5, 0.16, 0.28, 0.44, 0.34, 0.36, 0.1),
+    domeRing(0.45, 0.89, 0.85, 0.25, 0.46, 0.72, 0.62, 0.5, 0.28),
+    domeRing(0.05, 1.04, 0.98, 0.27, 0.53, 0.85, 0.69, 0.64, 0.41),
+    domeRing(-0.5, 1.09, 1.02, 0.28, 0.57, 0.9, 0.72, 0.66, 0.38),
+    domeRing(-0.95, 0.98, 0.92, 0.3, 0.56, 0.8, 0.69, 0.61, 0.36),
+    domeRing(-1.16, 0.8, 0.75, 0.24, 0.47, 0.66, 0.57, 0.52, 0.32),
+    domeRing(-1.26, 0.67, 0.61, 0.16, 0.34, 0.55, 0.39, 0.47, 0.36),
+    domeRing(-1.29, 0.5, 0.47, 0.085, 0.19, 0.45, 0.23, 0.423, 0.39),
   ], 3, 2), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.5});
   // ear shell: the wide lower helmet, 1.74 m across. Side view: its top climbs from 0.46 m at the vent to 0.7 m at the
   // back, the back is a large round, the bottom edge sits 0.38 m under the eyes. Corners are double-cut to read round.
   const shellRing = (z, w, yT, yB, c = 0.2, c2 = 0.2) => mir([[w - c2, yB, z], [w - 0.3 * c2, yB + 0.3 * c2, z], [w, yB + c2, z], [w, yT - c, z], [w - 0.3 * c, yT - 0.3 * c, z], [w - c, yT, z]]);
   const shellM = HA(smoothLoft([
-    shellRing(0.3, 0.5, 0.2, -0.34, 0.06, 0.1),
-    shellRing(0.0, 0.79, 0.36, -0.36, 0.1, 0.16),
-    shellRing(-0.1, 0.87, 0.47, -0.38, 0.16, 0.18),
-    shellRing(-0.2, 0.87, 0.52, -0.38, 0.16, 0.2),
-    shellRing(-0.5, 0.87, 0.54, -0.38, 0.24, 0.2),
-    shellRing(-0.95, 0.84, 0.6, -0.38, 0.34, 0.22),
-    shellRing(-1.2, 0.74, 0.52, -0.34, 0.34, 0.24),
-    shellRing(-1.31, 0.58, 0.38, -0.26, 0.24, 0.2),
-    shellRing(-1.36, 0.4, 0.22, -0.14, 0.12, 0.1),
-    shellRing(-1.37, 0.16, 0.1, -0.04, 0.05, 0.04),
+    shellRing(0.56, 0.42, 0.24, -0.13, 0.075, 0.1),
+    shellRing(0.43, 0.52, 0.32, -0.23, 0.095, 0.14),
+    shellRing(0.27, 0.63, 0.4, -0.33, 0.14, 0.15),
+    shellRing(0.0, 0.79, 0.49, -0.36, 0.16, 0.16),
+    shellRing(-0.1, 0.87, 0.52, -0.38, 0.2, 0.18),
+    shellRing(-0.2, 0.87, 0.56, -0.38, 0.21, 0.2),
+    shellRing(-0.5, 0.87, 0.6, -0.38, 0.24, 0.2),
+    shellRing(-0.95, 0.84, 0.67, -0.38, 0.3, 0.22),
+    shellRing(-1.2, 0.74, 0.63, -0.34, 0.29, 0.24),
+    shellRing(-1.31, 0.58, 0.565, -0.26, 0.23, 0.2),
+    shellRing(-1.36, 0.4, 0.45, -0.14, 0.16, 0.1),
+    shellRing(-1.37, 0.19, 0.29, -0.045, 0.105, 0.055),
   ], 3, 1), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.3});
   // engraved panel lines that follow the shells (side and rear views of the reference)
   const cutLine = (mesh, axis, value, keep) => mesh.add(new THREE.LineSegments(planeCut(mesh.geometry, axis, value, keep), seamInk));
   cutLine(domeM, 2, -0.42, (q) => q[1] > 0.45);
   cutLine(domeM, 2, 0.24, (q) => q[1] > 0.4);
-  cutLine(domeM, 1, 0.74, (q) => q[2] < 0.35 && q[2] > -1.1);
   cutLine(domeM, 0, 0, (q) => q[2] < -1.0);
   cutLine(shellM, 2, -0.36, (q) => q[1] > -0.36);
   cutLine(shellM, 2, -1.02, (q) => q[1] > -0.3);
@@ -831,25 +876,36 @@ export function buildFreedom() {
   // camera tower: leans back, 0.47 m wide at the brow and 0.3 m at its top 1.3 m above the eyes
   const twRing = (y, hw, zF, zB) => [[-hw, y, zB], [-hw, y, zF - 0.05], [-hw + 0.05, y, zF], [hw - 0.05, y, zF], [hw, y, zF - 0.05], [hw, y, zB]];
   HA(smoothLoft([twRing(0.46, 0.235, 1.0, 0.45), twRing(0.66, 0.235, 1.0, 0.4), twRing(1.12, 0.19, 0.86, 0.3), twRing(1.22, 0.18, 0.8, 0.26), twRing(1.3, 0.15, 0.64, 0.22)], 1, 1, true, true, 0.03), 'white', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.6});
-  frame(rbox(0.27, 0.4, 0.06, 0.02), head, [0, 0.875, 0.935], [-0.295, 0, 0], M.pocket); // camera recess
-  frame(rbox(0.24, 0.27, 0.05, 0.02), head, [0, 0.8, 0.965], [-0.295, 0, 0], M.joint); // lens bezel
-  frame(rbox(0.19, 0.21, 0.05, 0.03), head, [0, 0.8, 0.98], [-0.295, 0, 0], M.headLens);
-  HA(rbox(0.34, 0.05, 0.14, 0.015), 'white', [0, 1.1, 0.88], [-0.295, 0, 0], {reg: false}); // hood over the camera
+  const sensor = node(head, [0, 0.88, 0.932]);
+  sensor.rotation.x = -0.295;
+  frame(prism([[-0.132, 0.12], [-0.106, 0.18], [0.106, 0.18], [0.132, 0.12], [0.101, -0.175], [-0.101, -0.175]], 0.031, 0.014), sensor, [0, 0, 0], [0, 0, 0], M.pocket);
+  frame(rbox(0.215, 0.204, 0.048, 0.035), sensor, [0, -0.043, 0.015], [0, 0, 0], M.joint);
+  const lens = rbox(0.151, 0.152, 0.025, 0.026);
+  frame(lens, sensor, [0, -0.043, 0.042], [0, 0, 0], M.headLens);
+  HA(prism([[-0.167, 0.045], [-0.132, 0.086], [0.132, 0.086], [0.167, 0.045], [0.143, -0.014], [-0.143, -0.014]], 0.095, 0.012), 'white', [0, 0.186, -0.014], [0, 0, 0], {parent: sensor, reg: false});
   // crown ridge: the tower carried back over the dome as a blade, ending in an overhanging tail
-  HA(hull([[0.36, 0.9], [0.3, 1.2], [0.0, 1.28], [-0.46, 1.33], [-0.6, 0.9]], 0.34, 0.04), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.7});
-  HA(hull([[-0.5, 1.325], [-0.6, 1.3], [-1.22, 1.04], [-1.02, 0.8], [-0.7, 0.88], [-0.64, 0.9]], 0.34, 0.04), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.8}); // the tail plate, split from the front by a raked gap
+  HA(hull([[0.36, 0.88], [0.3, 1.16], [0.06, 1.26], [-0.2, 1.32], [-0.46, 1.33], [-0.53, 1.0], [-0.16, 0.93]], 0.38, 0.045), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.7});
+  HA(hull([[-0.5, 1.325], [-0.71, 1.29], [-0.94, 1.2], [-1.18, 1.04], [-1.01, 0.87], [-0.67, 0.98], [-0.57, 1.0]], 0.36, 0.04), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.8});
   // red crest: a beak, widest at the top, its nose 1.36 m ahead of the head centre, the point down between the eyes
   const crRing = (y, hw, zF, zB) => [[-hw, y, zB], [-hw, y, zF - 0.05], [-hw * 0.55, y, zF], [hw * 0.55, y, zF], [hw, y, zF - 0.05], [hw, y, zB]];
-  HA(smoothLoft([crRing(0.5, 0.17, 1.08, 0.8), crRing(0.12, 0.11, 1.33, 0.8), crRing(-0.03, 0.06, 1.16, 0.8)], 1, 1, true, true, 0.03), 'red', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.5});
+  const crest = HA(facet(smoothLoft([crRing(0.5, 0.175, 1.095, 0.91), crRing(0.41, 0.176, 1.145, 0.94), crRing(0.12, 0.117, 1.23, 0.97), crRing(-0.025, 0.018, 1.18, 1.025)], 1, 1, true, true, 0.02)), 'red', [0, 0, 0], [0, 0, 0], {edgeAngle: 46, dist: 1.5});
+  const crestInset = [
+    [-0.11, 0.44, 1.127], [0.11, 0.44, 1.127], [0.092, 0.165, 1.207],
+    [0, 0.047, 1.226], [-0.092, 0.165, 1.207], [-0.11, 0.44, 1.127],
+  ];
+  crest.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(crestInset.map((p) => new V3(...p))), ink));
   for (const s of [-1, 1]) {
-    frame(cylZ(0.022, 0.03, 10), head, [s * 0.1, 0.42, 1.14], [-0.58, 0, 0], M.pocket);
-    frame(cylZ(0.02, 0.03, 10), head, [s * 0.07, 0.17, 1.3], [-0.58, 0, 0], M.pocket);
+    frame(cylZ(0.012, 0.01, 12), crest, [s * 0.085, 0.415, 1.145], [-0.41, s * 0.16, 0], M.pocket);
   }
   // face mask: a ridged plate, two slits across the ridge, and the red chin below it
   const mkRing = (y, w, zC, zS) => [[-w, y, zS - 0.25], [-w, y, zS], [0, y, zC], [w, y, zS], [w, y, zS - 0.25]];
-  HA(smoothLoft([mkRing(-0.115, 0.3, 0.8, 0.66), mkRing(-0.335, 0.28, 0.82, 0.66), mkRing(-0.566, 0.19, 0.77, 0.64), mkRing(-0.6, 0.1, 0.73, 0.62)], 1, 1, true, true, 0.03), 'white', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.2});
+  HA(facet(smoothLoft([
+    mkRing(-0.083, 0.278, 0.848, 0.69), mkRing(-0.22, 0.269, 0.874, 0.69),
+    mkRing(-0.39, 0.23, 0.841, 0.665), mkRing(-0.53, 0.14, 0.787, 0.638),
+    mkRing(-0.6, 0.071, 0.747, 0.614),
+  ], 1, 1, true, true, 0.018)), 'white', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.2});
   const chRing = (y, hw, zF) => [[-hw, y, zF - 0.24], [-hw, y, zF - 0.04], [-hw * 0.5, y, zF], [hw * 0.5, y, zF], [hw, y, zF - 0.04], [hw, y, zF - 0.24]];
-  HA(smoothLoft([chRing(-0.4, 0.05, 0.83), chRing(-0.58, 0.1, 0.93), chRing(-0.76, 0.065, 0.84)], 1, 1, true, true, 0.03), 'red', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.2});
+  HA(facet(smoothLoft([chRing(-0.388, 0.043, 0.835), chRing(-0.435, 0.067, 0.899), chRing(-0.583, 0.071, 0.885), chRing(-0.735, 0.047, 0.819)], 1, 1, true, true, 0.019)), 'red', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.2});
   /** a V-fin blade: diamond section tapering from root R to a point at T, its flat facing nrm */
   const blade = (R0, T, w0, th0, nrm, root = null) => {
     const r0 = new V3(...R0);
@@ -869,60 +925,112 @@ export function buildFreedom() {
   const eyes = [];
   for (const s of [-1, 1]) {
     // V-fins: the long blade out to the side and back, the short one nearly upright to the 18.03 m tip
-    HA(blade([s * 0.12, 0.25, 0.96], [s * 1.66, 1.45, -0.1], 0.26, 0.08, [0, -0.45, 1], {up: [s * 0.12, 0.48, 0.95], front: [s * 0.16, 0.25, 1.04], low: [s * 0.1, 0.02, 0.97], back: [s * 0.12, 0.25, 0.86]}), 'yellow', [0, 0, 0], [0, 0, 0], {asm: 'vfin', dist: 1.6});
+    HA(blade([s * 0.12, 0.25, 0.96], [s * 1.52, 1.49, 0.01], 0.204, 0.071, [0, -0.45, 1], {up: [s * 0.12, 0.43, 0.95], front: [s * 0.152, 0.25, 1.028], low: [s * 0.105, 0.06, 0.97], back: [s * 0.12, 0.25, 0.86]}), 'yellow', [0, 0, 0], [0, 0, 0], {asm: 'vfin', dist: 1.6, edges: false});
     HA(blade([s * 0.27, 0.36, 0.92], [s * 0.45, 1.75, 0.6], 0.12, 0.06, [s * 0.25, -0.2, 1]), 'yellow', [0, 0, 0], [0, 0, 0], {asm: 'vfin', dist: 1.6});
     // brow visor: sweeps out and back from the crest, its lower lip over the eye
     const brow = node(head, [s * 0.1, 0, 0.94]);
     brow.rotation.y = s * 0.5;
-    HA(prism([[0, 0.0], [0.37, 0.12], [0.5, 0.22], [0.48, 0.27], [0.3, 0.21], [0, 0.1]].map(([x, y]) => [x * s, y]), 0.16, 0.03), 'white', [0, 0, 0], [-0.25, 0, 0], {parent: brow});
+    const browPlate = HA(prism([
+      [0, 0.01], [0.18, 0.055], [0.32, 0.15], [0.48, 0.303],
+      [0.423, 0.377], [0.278, 0.269], [0.12, 0.154], [0, 0.115],
+    ].map(([x, y]) => [x * s, y]), 0.132, 0.02), 'white', [0, 0.026, 0], [-0.21, 0, 0], {parent: brow});
+    cutLine(browPlate, 0, s * 0.348, ([, y, z]) => y > 0.18 && z > 0.035);
     // eye: an amber wedge slanting down to the crest, in a dark socket
-    const eye = node(head, [s * 0.07, 0, 0.8]);
-    eye.rotation.y = s * 0.42;
-    const e = frame(prism([[0, -0.03], [0.37, 0.09], [0.36, 0.0], [0.01, -0.055]].map(([x, y]) => [x * s, y]), 0.04, 0.004), eye, [0, 0, 0], [0, 0, 0], M.eye);
-    frame(prism([[0.01, -0.055], [0.36, 0.0], [0.34, -0.07], [0.02, -0.095]].map(([x, y]) => [x * s, y]), 0.04, 0.004), eye, [0, 0, -0.005], [0, 0, 0], M.eyeLow).castShadow = false; // the orange lower lid
+    const eye = node(head, [s * 0.078, 0.027, 0.882]);
+    eye.rotation.y = s * 0.54;
+    const e = frame(prism([[0, -0.027], [0.18, 0.026], [0.44, 0.178], [0.385, 0.065], [0.16, -0.024], [0.032, -0.075]].map(([x, y]) => [x * s, y]), 0.026, 0.004), eye, [0, 0, 0.013], [0, 0, 0], M.eye);
+    frame(prism([[0.032, -0.075], [0.16, -0.024], [0.385, 0.065], [0.35, 0.017], [0.17, -0.066], [0.05, -0.101]].map(([x, y]) => [x * s, y]), 0.024, 0.004), eye, [0, 0, 0.007], [0, 0, 0], M.eyeLow).castShadow = false;
     e.castShadow = false;
     eyes.push(e);
-    frame(rbox(0.42, 0.36, 0.05, 0.02), eye, [s * 0.17, 0.0, -0.05], [0, 0, 0], M.pocket);
-    frame(prism([[-0.03, -0.01], [0.39, 0.125], [0.4, 0.0], [0.37, -0.1], [0.0, -0.125]].map(([x, y]) => [x * s, y]), 0.03, 0.004), eye, [0, 0, -0.012], [0, 0, 0], M.socket); // dark rim round the eye
+    frame(prism([[-0.024, -0.014], [0.17, 0.058], [0.46, 0.215], [0.442, 0.077], [0.24, -0.067], [0.02, -0.125]].map(([x, y]) => [x * s, y]), 0.034, 0.006), eye, [0, 0, -0.027], [0, 0, 0], M.socket);
     // mouth slits, lying on the mask's two facets
-    for (const y of [-0.19, -0.245]) frame(rbox(0.09, 0.02, 0.03, 0.008), head, [s * 0.046, y, 0.8], [0, s * 0.5, 0], M.pocket);
-    // cheek guard: a tall slab from the brow to below the chin line
-    const ck = node(head, [s * 0.4, 0, 0.62]);
-    ck.rotation.y = s * 0.05;
-    const ckO = (z, yLo, yMid, yTop) => [[-0.08, Math.min(0.02, yTop - 0.06)], [0.1, yTop], [0.03, (yTop + yMid) / 2], [-0.02, yMid], [-0.03, yLo], [-0.1, yLo + 0.01], [-0.09, -0.18]].map(([x, y]) => [x * s, y, z]);
-    HA(smoothLoft([ckO(0.18, -0.68, -0.3, 0.15), ckO(0.1, -0.68, -0.3, 0.15), ckO(0.0, -0.62, -0.3, 0.0), ckO(-0.12, -0.5, -0.28, -0.05), ckO(-0.32, -0.36, -0.26, -0.08)], 1, 1, true, true, 0.03), 'white', [0, 0, 0], [0, 0, 0], {parent: ck, edgeAngle: 50, dist: 1.3}); // the top drops away behind the brow so the eye shows from the side; the jaw edge climbs toward the ear
-    HA(prism([[0.64, -0.36], [0.44, -0.4], [0.46, -0.6], [0.51, -0.7], [0.57, -0.58]].map(([x, y]) => [x * s, y]), 0.3, 0.03), 'white', [0, 0, 0.1], [0, 0, 0], {reg: false}); // tab under the vent
-    // side vent on the yawed face between the cheek guard and the ear: a dark recess, four slats falling inward
-    const vent = node(head, [s * 0.59, -0.04, 0.225]); // 0.09 m proud of the ear shell's yawed face
-    vent.rotation.y = s * 0.8;
-    // the ear guard: an angular rim round a dark recess, its outline read off the front close-up; open on the cheek side
-    {
-      const rim = [[-0.24, 0.23], [-0.1, 0.32], [0.24, 0.31], [0.275, 0.17], [0.24, -0.14], [0.14, -0.27], [-0.04, -0.34], [-0.24, -0.31]].map(([x, y]) => [x * s, y]);
-      frame(prism(rim, 0.03, 0.004), vent, [0, 0, 0.09], [0, 0, 0], M.pocket);
-      for (let i = 0; i < rim.length - 1; i++) {
-        const [ax, ay] = rim[i];
-        const [bx, by] = rim[i + 1];
-        HA(rbox(Math.hypot(bx - ax, by - ay) + 0.05, 0.06, 0.1, 0.02), 'white', [(ax + bx) / 2, (ay + by) / 2, 0.12], [0, 0, Math.atan2(by - ay, bx - ax)], {parent: vent, reg: false, edgeAngle: 50});
-      }
+    for (const y of [-0.19, -0.245]) {
+      frame(prism([[0, 0.01], [s * 0.081, -0.01], [s * 0.081, -0.023], [0, -0.006]], 0.012, 0.003), head, [0, y, y > -0.22 ? 0.872 : 0.87], [0, s * 0.64, 0], M.pocket);
     }
-    for (let k = 0; k < 4; k++) HA(rbox(0.35, 0.065, 0.09, 0.015), 'white', [-s * 0.02, 0.12 - k * 0.115, 0.135], [0.45, 0, -s * 0.28], {parent: vent, reg: false});
+    // cheek guard: a tall slab from the brow to below the chin line
+    const ck = node(head, [s * 0.415, 0, 0.62]);
+    ck.rotation.y = s * 0.22;
+    const ckO = (z, yLo, yMid, yTop, flare) => [
+      [-0.09, Math.min(0.027, yTop - 0.06)], [0.085 + flare, yTop],
+      [0.055 + flare, (yTop + yMid) / 2], [0.033 + flare, yMid],
+      [-0.061 + flare, yLo + 0.053], [-0.106, yLo], [-0.097, -0.17],
+    ].map(([x, y]) => [x * s, y, z]);
+    const cheek = HA(facet(smoothLoft([
+      ckO(0.19, -0.57, -0.23, 0.19, -0.06),
+      ckO(0.13, -0.645, -0.249, 0.218, -0.014),
+      ckO(0.015, -0.59, -0.29, 0.158, 0.063),
+      ckO(-0.13, -0.47, -0.28, 0.005, 0.09),
+      ckO(-0.32, -0.36, -0.26, -0.08, 0.035),
+    ], 1, 1, true, true, 0.017)), 'white', [0, 0, 0], [0, 0, 0], {parent: ck, edgeAngle: 45, dist: 1.3});
+    cutLine(cheek, 1, -0.34, ([x, , z]) => x * s > -0.02 && z > -0.12);
+    HA(prism([[0.64, -0.31], [0.45, -0.37], [0.47, -0.51], [0.5, -0.575], [0.57, -0.51]].map(([x, y]) => [x * s, y]), 0.23, 0.023), 'white', [0, 0, 0.105], [0, 0, 0], {reg: false});
+    // A single cheek plate with tapered openings over the dark vent cavity.
+    const vent = node(head, [s * 0.572, -0.049, 0.204]);
+    vent.rotation.y = s * 0.72;
+    vent.translateZ(0.048);
+    const outline = [[-0.237, 0.19], [-0.14, 0.325], [0.105, 0.324], [0.24, 0.225], [0.22, -0.066], [0.152, -0.199], [-0.032, -0.355], [-0.188, -0.283]];
+    const pathOf = (points) => points.map(([x, y]) => new THREE.Vector2(s * x, y));
+    const guard = new THREE.Shape(pathOf(outline));
+    guard.holes.push(new THREE.Path(pathOf([
+      [-0.183, 0.126], [0.167, 0.211], [0.157, -0.064], [0.106, -0.163],
+      [-0.037, -0.278], [-0.143, -0.239],
+    ])));
+    guard.holes.push(new THREE.Path(pathOf([
+      [0.064, 0.265], [0.109, 0.273], [0.123, 0.255], [0.077, 0.246],
+    ])));
+    const ventSkin = new THREE.ExtrudeGeometry(guard, {
+      depth: 0.048, bevelEnabled: true, bevelSize: 0.013, bevelThickness: 0.012, bevelSegments: 1,
+    });
+    // The outer lip stands proud of the temple. Its upper bevel returns to the
+    // helmet, while the side wall tapers into the lower cheek.
+    const lipRise = (x, y) => {
+      const outer = THREE.MathUtils.clamp((x + 0.18) / 0.36, 0, 1);
+      const height = THREE.MathUtils.clamp((y + 0.31) / 0.53, 0, 1);
+      const capReturn = Math.max(0, y - (0.18 + 0.24 * x));
+      return (0.075 + 0.108 * outer) * height - 0.66 * capReturn;
+    };
+    const verts = ventSkin.attributes.position;
+    for (let i = 0; i < verts.count; i++) {
+      const x = verts.getX(i), y = verts.getY(i), z = verts.getZ(i);
+      const face = THREE.MathUtils.clamp(z / 0.048, 0, 1);
+      verts.setZ(i, z + face * lipRise(s * x, y));
+    }
+    ventSkin.computeVertexNormals();
+    const guardMesh = HA(ventSkin, 'white', [0, 0, 0.081], [0, 0, 0], {parent: vent, dist: 1.36, edgeAngle: 52});
+    frame(prism(outline.map(([x, y]) => [s * x * 0.96, y * 0.96]), 0.017, 0.004), guardMesh, [0, 0, -0.026], [0, 0, 0], M.pocket);
+    for (const [y, left, right] of [[0.015, -0.181, 0.174], [-0.115, -0.158, 0.161]]) {
+      const edge = [[s * left, y, 0.092], [s * right, y + 0.083, 0.065]];
+      const back = edge.map(([x, vy]) => [x, vy + 0.045, -0.016]);
+      const underside = ([x, vy, z]) => [x, vy - 0.015, z];
+      const slat = loft([
+        [edge[0], back[0], underside(back[0]), underside(edge[0])],
+        [edge[1], back[1], underside(back[1]), underside(edge[1])],
+      ]);
+      HA(slat, 'white', [0, 0, 0], [0, 0, 0], {parent: guardMesh, reg: false, edges: false});
+    }
     frame(rbox(0.09, 0.04, 0.03, 0.012), head, [s * 0.675, 0.53, 0.12], [0, s * 1.42, 0], M.pocket); // CIWS port on the visor
     // temple sensor: a dark disc in a steel ring
     const ts = node(head, [s * 0.5, 0.35, 0.7]);
     ts.rotation.y = s * 1.0;
-    frame(cylZ(0.055, 0.06, 16), ts, [0, 0, 0], [0, 0, 0], M.pocket);
-    frame(new THREE.TorusGeometry(0.06, 0.016, 6, 18), ts, [0, 0, 0.025], [0, 0, 0], M.joint);
+    const temple = HA(prism([
+      [-0.15, -0.08], [-0.15, 0.06], [-0.078, 0.145], [0.082, 0.13],
+      [0.169, 0.035], [0.113, -0.125],
+    ].map(([x, y]) => [s * x, y]), 0.079, 0.016), 'white', [0, 0.012, 0.018], [0, 0, 0], {parent: ts, dist: 1.32});
+    frame(cylZ(0.05, 0.013, 20), temple, [0, -0.012, 0.047], [0, 0, 0], M.pocket);
+    frame(new THREE.TorusGeometry(0.058, 0.01, 6, 20), temple, [0, -0.012, 0.048], [0, 0, 0], M.joint);
     // ear: a shallow disc on the shell's side, three slits behind it
     // ear plate: a raised panel on the shell's flat side with three slits and a yellow marker, and the ear knob ahead of it
-    HA(hull([[-0.6, 0.28], [-1.0, 0.3], [-1.08, 0.12], [-1.04, -0.12], [-0.62, -0.15]], 0.05, 0.015), 'white', [s * 0.862, 0, 0], [0, 0, 0], {reg: false});
-    for (let k = 0; k < 3; k++) frame(rbox(0.03, 0.13, 0.03, 0.008), head, [s * 0.882, 0.14, -0.86 - k * 0.06], [0, 0, 0], M.pocket);
-    HA(rbox(0.02, 0.035, 0.1, 0.006), 'yellow', [s * 0.885, 0.16, -0.7], [0, 0, 0], {asm: 'vfin', reg: false, edges: false});
-    HA(cylX(0.15, 0.06, 20), 'white', [s * 0.86, 0.04, -0.36], [0, 0, 0], {reg: false});
-    frame(cylX(0.055, 0.08, 16), head, [s * 0.86, 0.04, -0.36], [0, 0, 0], M.joint);
-    frame(rbox(0.12, 0.045, 0.05, 0.012), head, [s * 0.45, 0.33, -1.265], [0, s * 0.6, 0], M.pocket); // rear slots
+    cutLine(shellM, 2, -0.67, ([x, y]) => x * s > 0.64 && y > -0.22 && y < 0.25);
+    for (const [z, y, width] of [[-0.81, 0.21, 0.085], [-0.94, 0.2, 0.055]]) {
+      frame(rbox(0.022, 0.035, width, 0.008), head, [s * 0.831, y, z], [0, s * 0.15, s * 0.17], M.pocket);
+    }
+    HA(rbox(0.015, 0.032, 0.075, 0.006), 'yellow', [s * 0.869, 0.143, -0.68], [0, 0, 0], {asm: 'vfin', reg: false, edges: false});
+    HA(cylX(0.094, 0.04, 24), 'white', [s * 0.85, 0.07, -0.35], [0, 0, 0], {reg: false});
+    frame(cylX(0.035, 0.027, 16), head, [s * 0.873, 0.07, -0.35], [0, 0, 0], M.joint);
+    frame(rbox(0.085, 0.04, 0.03, 0.009), head, [s * 0.43, 0.342, -1.255], [0, s * 0.6, 0], M.pocket);
   }
-  frame(rbox(0.22, 0.2, 0.08, 0.02), head, [0, 0.8, -1.13], [0.5, 0, 0], M.pocket); // rear camera recess under the ridge tail
-  HA(rbox(0.1, 0.05, 0.22, 0.015), 'yellow', [0, 1.05, -1.25], [-0.28, 0, 0], {asm: 'vfin', reg: false}); // tail tip
+  frame(rbox(0.16, 0.09, 0.035, 0.013), head, [0, 0.917, -1.123], [0.49, 0, 0], M.pocket);
+  HA(rbox(0.085, 0.026, 0.085, 0.008), 'yellow', [0, 1.043, -1.17], [-0.28, 0, 0], {asm: 'vfin', reg: false});
   powerLine(neck, [0, -0.2, 0], [0, 0.7, 0], 0.05);
 
   // ============================================================ arms (built on the left, mirrored for the right)
@@ -1182,7 +1290,7 @@ export function buildFreedom() {
     M.nozzle.color.setRGB(0.12 + 0.63 * th, 0.13 + 0.74 * th, 0.15 + 0.85 * th); // a dark bore at idle
     // eyes light with the phase shift
     const ps = mc.ps;
-    M.eye.color.setRGB(0.3 + 0.7 * ps, 0.16 + 0.56 * ps, 0.04 + 0.04 * ps);
+    M.eye.color.setRGB(0.3 + 0.7 * ps, 0.16 + 0.77 * ps, 0.04 + 0.54 * ps);
     M.eyeLow.color.setRGB(0.25 + 0.63 * ps, 0.12 + 0.3 * ps, 0.03 + 0.02 * ps); // glowing amber-orange, as on the reference
 
     // phase shift: the armor greys out when the PS power is off
@@ -1191,6 +1299,11 @@ export function buildFreedom() {
       M[k].metalness = BASE[k].m + 0.25 * (1 - ps);
       M[k].roughness = BASE[k].r + 0.06 * (1 - ps);
       GLASS[k].color.copy(M[k].color);
+    }
+    for (const [key, material] of Object.entries(headPaints)) {
+      material.color.copy(M[key].color);
+      material.metalness = M[key].metalness;
+      material.roughness = M[key].roughness;
     }
     const xr = ops.xray ?? 0;
     const glass = xr > 0.02;
