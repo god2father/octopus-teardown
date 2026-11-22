@@ -1,0 +1,71 @@
+{
+  "primaryView": "generated three-quarter, selected by user",
+  "sourceCoordinateFrame": "1000x1000 resized source tile; convert to native source pixels with factor 0.512",
+  "scope": "Manually located major-part landmarks. Projected points drive the mesh, not just an overlay. Occluded lower face sections and armor thickness remain inferred.",
+  "projection": {
+    "pixelsPerWorldUnit": 197.67151492082365,
+    "imageOriginU": 259.4331374058454,
+    "imageOriginV": 189.53812356317076,
+    "calibration": "Locked from V14 actual primary render and crest/chin reference registration. Used by mesh constraints and primary review alignment; not a likeness score.",
+    "cameraPosition": [3, -8, 2.2],
+    "targetZ": 1.04
+  },
+  "faceMaskCenterHalfWidth": 0.030,
+  "chinAssembly": {"depthOffset": 0.145, "verticalOffset": -0.0184},
+  "mouthSlots": {"crestHeights": [0.700,0.636], "flatHalfWidth": 0.030},
+  "faceMaskRows": [
+    {"left": [332,531], "right": [533,534], "ridge": [386,515]},
+    {"left": [341,579], "right": [531,583], "ridge": [391,565]},
+    {"inferred": true, "world": {"halfWidth": 0.220, "edgeY": -0.500, "ridgeY": -0.670, "edgeZ": 0.430, "ridgeZ": 0.4785}},
+    {"inferred": true, "world": {"halfWidth": 0.150, "edgeY": -0.620, "ridgeY": -0.600, "edgeZ": 0.337, "ridgeZ": 0.3446}}
+  ],
+  "cheekGuardFrontEdge": [
+    {"left": [312,510], "right": [551,495]},
+    {"left": [320,610], "right": [545,610]},
+    {"left": [325,660], "right": [539,670]},
+    {"left": [332,714], "right": [536,728]}
+  ],
+  "cheekGuardInferredCrossSection": {"ridgeWidth": 0.025, "outerWidth": 0.105, "outerDepthOffset": -0.120, "upperOuterRise": 0.025, "outerRise": 0.040},
+  "orbitalAssembly": {
+    "planeBackY": -0.800, "planeSlopeYPerX": 0.640,
+    "housing": [[430,486],[566,447],[566,494],[502,530],[419,511]],
+    "blackBezel": [[442,485],[554,458],[554,488],[502,516],[435,505]],
+    "lens": [[449,486],[541,460],[542,482],[502,504],[449,496]],
+    "lowerRimTop": [[419,511],[502,530],[566,494]],
+    "lowerRimBottom": [[419,520],[502,540],[566,506]],
+    "lowerBrow": [[415,498,-0.800],[435,489,-0.750],[502,470,-0.670],[566,447,-0.550],[632,416,-0.270],[689,397,-0.070]],
+    "scope": "Near-side visible eye/brow boundaries from primary view. Mirrored far side, supporting depth plane and hidden walls inferred."
+  },
+  "cheekVent": {
+    "rearTempleBulge": 0.075,
+    "moduleStandOff": 0.120,
+    "frameWallDepth": 0.200,
+    "ductDepth": 0.334,
+    "vaneTipThickness": 0.008,
+    "vaneRootThickness": 0.045,
+    "sideCasingRows": [
+      [[713,461,-0.070],[755,453,-0.260]],
+      [[729,528,-0.070],[790,546,-0.300]],
+      [[706,637,-0.070],[763,621,-0.260]]
+    ],
+    "outer": [[552,495],[655,427],[713,461],[729,528],[706,637],[536,728]],
+    "inner": [[575,542],[635,450],[696,470],[698,590],[681,614],[591,658]],
+    "shoulderUpper": [[552,480],[648,399],[713,442]],
+    "shoulderLower": [[552,495],[655,427],[713,461]],
+    "serviceSlot": [[661,411],[681,420],[677,430],[657,422]],
+    "vanes": [
+      [[575,546,0.090],[640,491,-0.250],[705,480,-0.040],[706,491,0.010]],
+      [[580,600,0.090],[643,547,-0.250],[704,539,-0.040],[705,549,0.010]],
+      [[594,658,0.090],[649,608,-0.250],[695,597,-0.040],[697,608,0.010]]
+    ],
+    "scope": "Visible near-side intake outline and vane top faces traced in primary image. Depth offsets, thickness and mirrored far side inferred."
+  },
+  "sensorHousing": {
+    "sourceLandmarks": {"hoodTopLeft": [378,150], "hoodTopRight": [450,150], "hoodLowerRight": [475,238], "lensCenter": [415,245], "podFrontBounds": [377,200,450,280]},
+    "hoodTopZ": 1.700, "hoodLegBottomZ": 1.445,
+    "hoodRoofSlope": 0.260,
+    "hoodFrontYAtTop": -0.640, "hoodFrontYAtBottom": -0.580,
+    "podCenterY": -0.660, "podBackDepth": 0.160, "podVerticalOffset": -0.018,
+    "scope": "Visible housing shape from primary view; rear depth and hidden attachment surfaces inferred."
+  }
+}

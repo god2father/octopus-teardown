@@ -1,0 +1,335 @@
+{
+  "scope": "Historical head images, including reference crops and failed/intermediate model renders; not all are current model images.",
+  "images": [
+    {
+      "path": "audit/freedom/grid/head-angles.png",
+      "originalPath": "teardown-out/audit/freedom/grid/head-angles.png",
+      "sha256": "6959384a3b70d6a29a70375b951ad9107ab4e943d0d657d1731866f04fcd38f0",
+      "bytes": 880202
+    },
+    {
+      "path": "audit/freedom/grid/head-closeup.png",
+      "originalPath": "teardown-out/audit/freedom/grid/head-closeup.png",
+      "sha256": "8799a4576ed3eb375ea6cbc7ce91ac9594168ba7f5279c3f0a881d4a7325d09a",
+      "bytes": 1743243
+    },
+    {
+      "path": "audit/freedom/grid/head-same-scale.png",
+      "originalPath": "teardown-out/audit/freedom/grid/head-same-scale.png",
+      "sha256": "1543da43d20af48f8af33865b629ecb1165eb2d5c32dc66800eb44b72146218e",
+      "bytes": 451130
+    },
+    {
+      "path": "freedom-head-compare.png",
+      "originalPath": "teardown-out/freedom-head-compare.png",
+      "sha256": "c001627283b618d50027967cecadbdcfcb1fd5db3cd6e83b346ac44963279a88",
+      "bytes": 2264949
+    },
+    {
+      "path": "head-before/back.png",
+      "originalPath": "teardown-out/head-before/back.png",
+      "sha256": "bc869d387ac28ca59260839f063b5f0fed3f2339dc351a6369340a6fb0aa7725",
+      "bytes": 550662
+    },
+    {
+      "path": "head-before/front.png",
+      "originalPath": "teardown-out/head-before/front.png",
+      "sha256": "76f8b012613e082c49943f31c3a7db8d2a4c7f91f64fc4cac52b6d689fa519a2",
+      "bytes": 788220
+    },
+    {
+      "path": "head-before/low.png",
+      "originalPath": "teardown-out/head-before/low.png",
+      "sha256": "960d7df4777b4c689c78577e28019f24e51e9f25a35799a4347348466ade52e1",
+      "bytes": 751552
+    },
+    {
+      "path": "head-before/q.png",
+      "originalPath": "teardown-out/head-before/q.png",
+      "sha256": "a33c22642d3351bdd49e92daa8e007167de776d5a4b1d433dadff5bf213f3f93",
+      "bytes": 1007505
+    },
+    {
+      "path": "head-before/rq.png",
+      "originalPath": "teardown-out/head-before/rq.png",
+      "sha256": "ccf92f785c5541c885234377a4386439fed56cc219dc5a6d338f43a72f63dac4",
+      "bytes": 809690
+    },
+    {
+      "path": "head-before/side.png",
+      "originalPath": "teardown-out/head-before/side.png",
+      "sha256": "734ca4463e6ba20948adc3ab3eafd6718449b3ada8d777f691703fcaa54316ce",
+      "bytes": 958186
+    },
+    {
+      "path": "head-before/top.png",
+      "originalPath": "teardown-out/head-before/top.png",
+      "sha256": "f8d005f8718241ff22b8cc48d23cc6c5a6c2004eb087aecc6000000b9e3fbd3c",
+      "bytes": 1213975
+    },
+    {
+      "path": "head-blender-v1/front.png",
+      "originalPath": "teardown-out/head-blender-v1/front.png",
+      "sha256": "67b1be32fbdea25e208a57e322d2ea107a618b5c9a8d3d065c509e0226334aa7",
+      "bytes": 600054
+    },
+    {
+      "path": "head-blender-v1/reference-back.png",
+      "originalPath": "teardown-out/head-blender-v1/reference-back.png",
+      "sha256": "765b7626ed38825aed34650e0a3a6b8bef20ba9bf8e1a65f60f41af52556947a",
+      "bytes": 570532
+    },
+    {
+      "path": "head-blender-v1/reference-front.png",
+      "originalPath": "teardown-out/head-blender-v1/reference-front.png",
+      "sha256": "5e5da0c13416c7566188b15736447125a0b996a681d07d14d509cce94102840a",
+      "bytes": 666761
+    },
+    {
+      "path": "head-blender-v1/reference-rear-three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v1/reference-rear-three-quarter.png",
+      "sha256": "2efb6c3785779304a6b5771db8283918432bc9c4fb9a4a6b8ee6292f93ab34d7",
+      "bytes": 584836
+    },
+    {
+      "path": "head-blender-v1/reference-side.png",
+      "originalPath": "teardown-out/head-blender-v1/reference-side.png",
+      "sha256": "38d9986f3f7fb3f4fe18c3c8a91850c9adb4fc7cb48c634f6419fb2dfb27eb06",
+      "bytes": 608035
+    },
+    {
+      "path": "head-blender-v1/reference-three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v1/reference-three-quarter.png",
+      "sha256": "4aae6f01e06e10cd13bb91cb670382da4857f8d0669028c59c17a7410d008613",
+      "bytes": 651242
+    },
+    {
+      "path": "head-blender-v1/reference-top.png",
+      "originalPath": "teardown-out/head-blender-v1/reference-top.png",
+      "sha256": "4e8950569b87fd1cf4930c8fa36accf3147f61640bda7809baf14a19e0290ed5",
+      "bytes": 577489
+    },
+    {
+      "path": "head-blender-v1/side.png",
+      "originalPath": "teardown-out/head-blender-v1/side.png",
+      "sha256": "43c3f4b22f907e4c51157d24c4f3b262ee4d139cb30a2064ccc0e0054673d4a5",
+      "bytes": 554644
+    },
+    {
+      "path": "head-blender-v10/side.png",
+      "originalPath": "teardown-out/head-blender-v10/side.png",
+      "sha256": "24f854fbcc790bb40b89d218cc4becb357a62c2500d495343b4a679050bb98a2",
+      "bytes": 669825
+    },
+    {
+      "path": "head-blender-v10/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v10/three-quarter.png",
+      "sha256": "eb38ce3e0dff9bc44102bff326ba54aa1bfa1f73fbf48f61c1b1d103336a610b",
+      "bytes": 708716
+    },
+    {
+      "path": "head-blender-v11/side.png",
+      "originalPath": "teardown-out/head-blender-v11/side.png",
+      "sha256": "5d1fb3e08e62cd76bf1f8fe5ff23ead59a73c436ad8c8b1e22966239cf1008fa",
+      "bytes": 667815
+    },
+    {
+      "path": "head-blender-v11/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v11/three-quarter.png",
+      "sha256": "32b184becb3d39229e115e69c8fa17cc1cd5c5f7d2e132c9ffbfd2967edeefea",
+      "bytes": 707287
+    },
+    {
+      "path": "head-blender-v12/side.png",
+      "originalPath": "teardown-out/head-blender-v12/side.png",
+      "sha256": "045e35ed065c3d203b54530938a78f063fc9e5c5373685c5ebe5b3c4b1824c5d",
+      "bytes": 668312
+    },
+    {
+      "path": "head-blender-v12/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v12/three-quarter.png",
+      "sha256": "089330275d6d1dc85f42aa20cbb8cbb6d39e771535af535a09bcf089f1826449",
+      "bytes": 706751
+    },
+    {
+      "path": "head-blender-v13/front.png",
+      "originalPath": "teardown-out/head-blender-v13/front.png",
+      "sha256": "10b6484e2036d03626b667d9de25dc84e7e673b6a7f040f64b2b00c204adb438",
+      "bytes": 685664
+    },
+    {
+      "path": "head-blender-v13/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v13/three-quarter.png",
+      "sha256": "cd38fe501414c87b00367eb05fdb0e981dbdfcf0cff8ebe9702ee4745d660f49",
+      "bytes": 708546
+    },
+    {
+      "path": "head-blender-v14/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v14/three-quarter.png",
+      "sha256": "075e3ddcce4b64f8d939b0eddb62330f8d4735c777ba78814d0b12121bbc03be",
+      "bytes": 708680
+    },
+    {
+      "path": "head-blender-v15/side.png",
+      "originalPath": "teardown-out/head-blender-v15/side.png",
+      "sha256": "8867709bbfd8a1ce9dfd822076c45b1544c7b8affb931b0f625e3522145cfc7d",
+      "bytes": 665849
+    },
+    {
+      "path": "head-blender-v15/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v15/three-quarter.png",
+      "sha256": "528a041f4412655476dc5d8ed4e0c390aad02df699ee7b7cf69e61ef592f5636",
+      "bytes": 706303
+    },
+    {
+      "path": "head-blender-v16/side.png",
+      "originalPath": "teardown-out/head-blender-v16/side.png",
+      "sha256": "6203395ea4aa833167a91467eea209936f36bd62da0fe7f57eb6bafdcae836fc",
+      "bytes": 664907
+    },
+    {
+      "path": "head-blender-v16/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v16/three-quarter.png",
+      "sha256": "248cfc46afb4c6f125e141fc0ca90600fd53aa0e745b647789e8bf392b8df35c",
+      "bytes": 704930
+    },
+    {
+      "path": "head-blender-v17/side.png",
+      "originalPath": "teardown-out/head-blender-v17/side.png",
+      "sha256": "d18d8c555a4d4558dc9f2da7c458a76589939f2caf2e66ab82a214cc1e034365",
+      "bytes": 665653
+    },
+    {
+      "path": "head-blender-v17/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v17/three-quarter.png",
+      "sha256": "0e0a28b8c89c0b02e81c1cd098b14b8c3751fa4fd1c25d6c9b25f674d9a8a5fc",
+      "bytes": 705640
+    },
+    {
+      "path": "head-blender-v18/side.png",
+      "originalPath": "teardown-out/head-blender-v18/side.png",
+      "sha256": "dd20b827596a2aceb09d7fc5a9bebac2ea0fe239014ae446f662e9ae0ff2750c",
+      "bytes": 665554
+    },
+    {
+      "path": "head-blender-v18/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v18/three-quarter.png",
+      "sha256": "51b4cc90a33114d54067ad3be74ee160ac7167a891a136c0e5a0ea14e2c08f01",
+      "bytes": 705996
+    },
+    {
+      "path": "head-blender-v3/side.png",
+      "originalPath": "teardown-out/head-blender-v3/side.png",
+      "sha256": "7c07847ab376189b81567cf51d6c38d7f26944f31719a59d4bccc51ae75aee03",
+      "bytes": 680297
+    },
+    {
+      "path": "head-blender-v3/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v3/three-quarter.png",
+      "sha256": "8d0b293e1cc65e8c5114e9b8da5f92ec47b143f5ad04b17351c398365e7aeb79",
+      "bytes": 714012
+    },
+    {
+      "path": "head-blender-v4/side.png",
+      "originalPath": "teardown-out/head-blender-v4/side.png",
+      "sha256": "2e98354afcfedacf64fbe29b868fac63d2d0e81c79ae9e1a5873ad3670e559e8",
+      "bytes": 675527
+    },
+    {
+      "path": "head-blender-v4/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v4/three-quarter.png",
+      "sha256": "f6c21e10f42db54d8cca66f5c20d74a4ecff398dedc17a2e7c808fa7faecfdf7",
+      "bytes": 710031
+    },
+    {
+      "path": "head-blender-v5/silhouette-front.png",
+      "originalPath": "teardown-out/head-blender-v5/silhouette-front.png",
+      "sha256": "78aa749b62120836d4f564b84662d1647ceff782f47b2c86188b4335f5ceb8dc",
+      "bytes": 725162
+    },
+    {
+      "path": "head-blender-v5/silhouette-side.png",
+      "originalPath": "teardown-out/head-blender-v5/silhouette-side.png",
+      "sha256": "4cf6a9d406d7695a46c902d6863f4e14813a4a68866a394e99682d20a969141f",
+      "bytes": 748407
+    },
+    {
+      "path": "head-blender-v5/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v5/three-quarter.png",
+      "sha256": "65943cdad1a6adcc84099427e7b11215305ce0495242e5792e86647ef88d0e42",
+      "bytes": 702816
+    },
+    {
+      "path": "head-blender-v7/actual-clay-vs-reference.png",
+      "originalPath": "teardown-out/head-blender-v7/actual-clay-vs-reference.png",
+      "sha256": "61d1dcc3bb8f5e47d8a15ed299dea2657be2330dee4ee4ab2c7c4cf4b5c67dca",
+      "bytes": 403103
+    },
+    {
+      "path": "head-blender-v8/side-before-vents.png",
+      "originalPath": "teardown-out/head-blender-v8/side-before-vents.png",
+      "sha256": "cb09428ac365acb3381d7f76fec4b59b0691e3a0db801a675f4baa7f17e732d2",
+      "bytes": 671385
+    },
+    {
+      "path": "head-blender-v8/three-quarter-before-vents.png",
+      "originalPath": "teardown-out/head-blender-v8/three-quarter-before-vents.png",
+      "sha256": "1055015ba5d96fe058adbf4f6920dd74fb97a2bdf952b7c49e7bfb165b232adc",
+      "bytes": 703308
+    },
+    {
+      "path": "head-blender-v9/side.png",
+      "originalPath": "teardown-out/head-blender-v9/side.png",
+      "sha256": "98150450dbd298c3baed188da90acaf968170530f085bc76451f6c9cf4ac212a",
+      "bytes": 670119
+    },
+    {
+      "path": "head-blender-v9/three-quarter.png",
+      "originalPath": "teardown-out/head-blender-v9/three-quarter.png",
+      "sha256": "89b2ae49ff399b16891096746cb63f4dbedf64040673e25a5b86461998e53140",
+      "bytes": 707983
+    },
+    {
+      "path": "head-eyes-reference-grid.png",
+      "originalPath": "teardown-out/head-eyes-reference-grid.png",
+      "sha256": "5d25ca1f7d59cffb0c4e4d11bb045552f6e09a8f83a9bf36635fb763b8c2e39b",
+      "bytes": 344022
+    },
+    {
+      "path": "head-face-reference-grid.png",
+      "originalPath": "teardown-out/head-face-reference-grid.png",
+      "sha256": "f5b01774e01d3f5f0a00351e956a30adf8242e79b8f6760741621256f02ce2b0",
+      "bytes": 438898
+    },
+    {
+      "path": "head-hood-reference-grid.png",
+      "originalPath": "teardown-out/head-hood-reference-grid.png",
+      "sha256": "dd511a2bfd0847210f40673ef99eb8ce076f03b011d0b1f55b713ca3748eaeec",
+      "bytes": 315345
+    },
+    {
+      "path": "head-primary-comparison.png",
+      "originalPath": "teardown-out/head-primary-comparison.png",
+      "sha256": "f5b5c48268b744390765f4b87083d567db05696dcc74e741cc342dce72c73bab",
+      "bytes": 939534
+    },
+    {
+      "path": "head-vent-reference-grid.png",
+      "originalPath": "teardown-out/head-vent-reference-grid.png",
+      "sha256": "7a10f0d12430b5b360d226a4141b788ac066a0818fafee1d04b14e219429624c",
+      "bytes": 285424
+    },
+    {
+      "path": "vane-section-experiment/side.png",
+      "originalPath": "teardown-out/vane-section-experiment/side.png",
+      "sha256": "2ccbaf8fac626c62000920e6637221f6b71a512aaa4009d3b509333c0e94ef35",
+      "bytes": 668037
+    },
+    {
+      "path": "vane-section-experiment/three-quarter.png",
+      "originalPath": "teardown-out/vane-section-experiment/three-quarter.png",
+      "sha256": "b0da46a75b650737118412d1e7298600497b0ab3a7a86d570e1b63e655eaeca3",
+      "bytes": 705681
+    }
+  ]
+}

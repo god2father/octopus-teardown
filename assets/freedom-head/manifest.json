@@ -1,0 +1,638 @@
+{
+  "revision": 19,
+  "reference": "reference/head-six-views.png",
+  "coordinateSystem": "X right, -Y front, Z up",
+  "partConstraints": "reference/part-constraints.json",
+  "primaryReferenceView": "generated three-quarter (user selected)",
+  "reviewCameraPositions": {
+    "front": [
+      0,
+      -8,
+      1.04
+    ],
+    "three-quarter": [
+      3,
+      -8,
+      2.2
+    ],
+    "side": [
+      8,
+      0,
+      1.04
+    ],
+    "rear-three-quarter": [
+      5,
+      8,
+      2.2
+    ],
+    "back": [
+      0,
+      8,
+      1.04
+    ],
+    "top": [
+      0,
+      -0.001,
+      10
+    ]
+  },
+  "macroCalibration": {
+    "posteriorDepthScale": 0.8,
+    "upperHelmetWidthScaleAtTop": 0.8,
+    "upperHelmetHeightScale": 0.8,
+    "neckForwardOffset": 0.245,
+    "frontFacialDepthPreserved": true
+  },
+  "modelingUnitsPerReferencePixel": 0.005,
+  "objects": 144,
+  "parts": [
+    {
+      "name": "Chin highlight ridge",
+      "type": "MESH"
+    },
+    {
+      "name": "Chin white socket",
+      "type": "MESH"
+    },
+    {
+      "name": "Crown swept spine tile 00",
+      "type": "MESH"
+    },
+    {
+      "name": "Crown swept spine tile 01",
+      "type": "MESH"
+    },
+    {
+      "name": "Crown swept spine tile 02",
+      "type": "MESH"
+    },
+    {
+      "name": "Face internal bridge",
+      "type": "MESH"
+    },
+    {
+      "name": "Face mask | closed tapered armor",
+      "type": "MESH"
+    },
+    {
+      "name": "Forehead flush fastener",
+      "type": "MESH"
+    },
+    {
+      "name": "Forehead flush fastener.001",
+      "type": "MESH"
+    },
+    {
+      "name": "Forehead flush fastener.002",
+      "type": "MESH"
+    },
+    {
+      "name": "Forehead flush fastener.003",
+      "type": "MESH"
+    },
+    {
+      "name": "Forehead lower bridge",
+      "type": "MESH"
+    },
+    {
+      "name": "Forehead roof | hood-to-crown transition",
+      "type": "MESH"
+    },
+    {
+      "name": "Forehead sensor recessed well",
+      "type": "MESH"
+    },
+    {
+      "name": "L amber optical lens",
+      "type": "MESH"
+    },
+    {
+      "name": "L armor screw 0.37",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek flush screw 0",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek flush screw 1",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek flush screw 2",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek guard countersink 0.32",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek guard countersink 0.74",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek guard fastener 0.32",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek guard fastener 0.74",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek guard | folded long plate",
+      "type": "MESH"
+    },
+    {
+      "name": "L cheek pod to helmet junction",
+      "type": "MESH"
+    },
+    {
+      "name": "L deep eye housing",
+      "type": "MESH"
+    },
+    {
+      "name": "L faceted temporal armor",
+      "type": "MESH"
+    },
+    {
+      "name": "L fin central arris",
+      "type": "MESH"
+    },
+    {
+      "name": "L heavy visor edge",
+      "type": "MESH"
+    },
+    {
+      "name": "L helmet course 0 panel 0",
+      "type": "MESH"
+    },
+    {
+      "name": "L helmet course 0 panel 1",
+      "type": "MESH"
+    },
+    {
+      "name": "L helmet course 1 panel 0",
+      "type": "MESH"
+    },
+    {
+      "name": "L helmet course 1 panel 1",
+      "type": "MESH"
+    },
+    {
+      "name": "L helmet course 2 panel 0",
+      "type": "MESH"
+    },
+    {
+      "name": "L helmet course 2 panel 1",
+      "type": "MESH"
+    },
+    {
+      "name": "L intake front cheek wall",
+      "type": "MESH"
+    },
+    {
+      "name": "L louver armored frame",
+      "type": "MESH"
+    },
+    {
+      "name": "L louver cavity backing",
+      "type": "MESH"
+    },
+    {
+      "name": "L louver cavity liner",
+      "type": "MESH"
+    },
+    {
+      "name": "L lower cheek to skull volume",
+      "type": "MESH"
+    },
+    {
+      "name": "L lower orbital ceramic rim",
+      "type": "MESH"
+    },
+    {
+      "name": "L nape skirt",
+      "type": "MESH"
+    },
+    {
+      "name": "L orbital black bezel",
+      "type": "MESH"
+    },
+    {
+      "name": "L rear lower division",
+      "type": "MESH"
+    },
+    {
+      "name": "L rear service notch",
+      "type": "MESH"
+    },
+    {
+      "name": "L sensor hood | short leg",
+      "type": "MESH"
+    },
+    {
+      "name": "L sensor lower shoulder",
+      "type": "MESH"
+    },
+    {
+      "name": "L shoulder slot dark bed",
+      "type": "MESH"
+    },
+    {
+      "name": "L tapered diagonal louver 0",
+      "type": "MESH"
+    },
+    {
+      "name": "L tapered diagonal louver 1",
+      "type": "MESH"
+    },
+    {
+      "name": "L tapered diagonal louver 2",
+      "type": "MESH"
+    },
+    {
+      "name": "L temple ceramic surround",
+      "type": "MESH"
+    },
+    {
+      "name": "L temple dark center",
+      "type": "MESH"
+    },
+    {
+      "name": "L temple engraved division",
+      "type": "MESH"
+    },
+    {
+      "name": "L temple inset",
+      "type": "MESH"
+    },
+    {
+      "name": "L temple steel rim",
+      "type": "MESH"
+    },
+    {
+      "name": "L temple-to-intake shell",
+      "type": "MESH"
+    },
+    {
+      "name": "L V-fin inner",
+      "type": "MESH"
+    },
+    {
+      "name": "L V-fin outer",
+      "type": "MESH"
+    },
+    {
+      "name": "L vent upper shoulder",
+      "type": "MESH"
+    },
+    {
+      "name": "L volumetric visor and temple",
+      "type": "MESH"
+    },
+    {
+      "name": "L volumetric visor rear closure",
+      "type": "MESH"
+    },
+    {
+      "name": "Mandible internal structure",
+      "type": "MESH"
+    },
+    {
+      "name": "Mouth dark interior -1 0.636",
+      "type": "MESH"
+    },
+    {
+      "name": "Mouth dark interior -1 0.700",
+      "type": "MESH"
+    },
+    {
+      "name": "Mouth dark interior 1 0.636",
+      "type": "MESH"
+    },
+    {
+      "name": "Mouth dark interior 1 0.700",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck bottom flange",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 00",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 01",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 02",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 03",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 04",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 05",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 06",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 07",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 08",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 09",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 10",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck collar segment 11",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck front armored trapezoid",
+      "type": "MESH"
+    },
+    {
+      "name": "Neck spherical pivot",
+      "type": "MESH"
+    },
+    {
+      "name": "Optical pod | deep body",
+      "type": "MESH"
+    },
+    {
+      "name": "Optical pod | lens",
+      "type": "MESH"
+    },
+    {
+      "name": "Optical pod | machined bezel",
+      "type": "MESH"
+    },
+    {
+      "name": "R amber optical lens",
+      "type": "MESH"
+    },
+    {
+      "name": "R armor screw 0.37",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek flush screw 0",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek flush screw 1",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek flush screw 2",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek guard countersink 0.32",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek guard countersink 0.74",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek guard fastener 0.32",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek guard fastener 0.74",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek guard | folded long plate",
+      "type": "MESH"
+    },
+    {
+      "name": "R cheek pod to helmet junction",
+      "type": "MESH"
+    },
+    {
+      "name": "R deep eye housing",
+      "type": "MESH"
+    },
+    {
+      "name": "R faceted temporal armor",
+      "type": "MESH"
+    },
+    {
+      "name": "R fin central arris",
+      "type": "MESH"
+    },
+    {
+      "name": "R heavy visor edge",
+      "type": "MESH"
+    },
+    {
+      "name": "R helmet course 0 panel 0",
+      "type": "MESH"
+    },
+    {
+      "name": "R helmet course 0 panel 1",
+      "type": "MESH"
+    },
+    {
+      "name": "R helmet course 1 panel 0",
+      "type": "MESH"
+    },
+    {
+      "name": "R helmet course 1 panel 1",
+      "type": "MESH"
+    },
+    {
+      "name": "R helmet course 2 panel 0",
+      "type": "MESH"
+    },
+    {
+      "name": "R helmet course 2 panel 1",
+      "type": "MESH"
+    },
+    {
+      "name": "R intake front cheek wall",
+      "type": "MESH"
+    },
+    {
+      "name": "R louver armored frame",
+      "type": "MESH"
+    },
+    {
+      "name": "R louver cavity backing",
+      "type": "MESH"
+    },
+    {
+      "name": "R louver cavity liner",
+      "type": "MESH"
+    },
+    {
+      "name": "R lower cheek to skull volume",
+      "type": "MESH"
+    },
+    {
+      "name": "R lower orbital ceramic rim",
+      "type": "MESH"
+    },
+    {
+      "name": "R nape skirt",
+      "type": "MESH"
+    },
+    {
+      "name": "R orbital black bezel",
+      "type": "MESH"
+    },
+    {
+      "name": "R rear lower division",
+      "type": "MESH"
+    },
+    {
+      "name": "R rear service notch",
+      "type": "MESH"
+    },
+    {
+      "name": "R sensor hood | short leg",
+      "type": "MESH"
+    },
+    {
+      "name": "R sensor lower shoulder",
+      "type": "MESH"
+    },
+    {
+      "name": "R shoulder slot dark bed",
+      "type": "MESH"
+    },
+    {
+      "name": "R tapered diagonal louver 0",
+      "type": "MESH"
+    },
+    {
+      "name": "R tapered diagonal louver 1",
+      "type": "MESH"
+    },
+    {
+      "name": "R tapered diagonal louver 2",
+      "type": "MESH"
+    },
+    {
+      "name": "R temple ceramic surround",
+      "type": "MESH"
+    },
+    {
+      "name": "R temple dark center",
+      "type": "MESH"
+    },
+    {
+      "name": "R temple engraved division",
+      "type": "MESH"
+    },
+    {
+      "name": "R temple inset",
+      "type": "MESH"
+    },
+    {
+      "name": "R temple steel rim",
+      "type": "MESH"
+    },
+    {
+      "name": "R temple-to-intake shell",
+      "type": "MESH"
+    },
+    {
+      "name": "R V-fin inner",
+      "type": "MESH"
+    },
+    {
+      "name": "R V-fin outer",
+      "type": "MESH"
+    },
+    {
+      "name": "R vent upper shoulder",
+      "type": "MESH"
+    },
+    {
+      "name": "R volumetric visor and temple",
+      "type": "MESH"
+    },
+    {
+      "name": "R volumetric visor rear closure",
+      "type": "MESH"
+    },
+    {
+      "name": "Rear central locking tab",
+      "type": "MESH"
+    },
+    {
+      "name": "Rear neck cooling blade 0",
+      "type": "MESH"
+    },
+    {
+      "name": "Rear neck cooling blade 1",
+      "type": "MESH"
+    },
+    {
+      "name": "Rear neck cooling blade 2",
+      "type": "MESH"
+    },
+    {
+      "name": "Rear neck cooling blade 3",
+      "type": "MESH"
+    },
+    {
+      "name": "Rear neck vent well",
+      "type": "MESH"
+    },
+    {
+      "name": "Rear optical glass",
+      "type": "MESH"
+    },
+    {
+      "name": "Rear spine inset",
+      "type": "MESH"
+    },
+    {
+      "name": "Red chin keel",
+      "type": "MESH"
+    },
+    {
+      "name": "Red forehead central keystone",
+      "type": "MESH"
+    },
+    {
+      "name": "Sensor hood | upper beam",
+      "type": "MESH"
+    }
+  ],
+  "views": [
+    "front",
+    "three-quarter",
+    "side",
+    "rear-three-quarter",
+    "back",
+    "top"
+  ],
+  "limitations": [
+    "Generated views are not exact orthographic measurements.",
+    "Rear/top details are inferred; live page integration is not yet performed."
+  ]
+}

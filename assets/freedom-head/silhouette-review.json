@@ -1,0 +1,35 @@
+{
+  "scope": "Manual approximate outer body contours including neck and excluding the gold V-fin. Hidden edges behind antennae are inferred. These are diagnostic traces, not official dimensions or a complete likeness test.",
+  "projection": "200 source pixels/unit, eye reference Z=.8; fixed mapping, no per-revision fit",
+  "legend": {
+    "reference": "cyan",
+    "V5": "orange",
+    "V6": "magenta"
+  },
+  "views": {
+    "front": {
+      "V5": {
+        "manualTraceIoU": 0.864632579490314,
+        "modelBodyPixels": 76993,
+        "referenceTracePixels": 72489
+      },
+      "V6": {
+        "manualTraceIoU": 0.8976045950003263,
+        "modelBodyPixels": 72877,
+        "referenceTracePixels": 72489
+      }
+    },
+    "side": {
+      "V5": {
+        "manualTraceIoU": 0.7507738306293184,
+        "modelBodyPixels": 92068,
+        "referenceTracePixels": 90627
+      },
+      "V6": {
+        "manualTraceIoU": 0.831375472602375,
+        "modelBodyPixels": 81330,
+        "referenceTracePixels": 90627
+      }
+    }
+  }
+}
