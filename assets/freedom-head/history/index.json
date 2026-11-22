@@ -331,5 +331,79 @@
       "sha256": "b0da46a75b650737118412d1e7298600497b0ab3a7a86d570e1b63e655eaeca3",
       "bytes": 705681
     }
+  ],
+  "models": [
+    {
+      "path": "head-blender-v1/freedom-head.blend",
+      "originalPath": "teardown-out/head-blender-v1/freedom-head.blend",
+      "sha256": "f61479a3f1b8b5a9ead65d96de8b3161e47341fdb28f0e3de2bfcfd43429ad61",
+      "bytes": 1431376
+    },
+    {
+      "path": "head-blender-v1/old-ui-session.blend",
+      "originalPath": "teardown-out/head-blender-v1/old-ui-session.blend",
+      "sha256": "50af3def5571f1fa52fc9c3898fa8b886534f705298e26b130b3745a091999b0",
+      "bytes": 1393796
+    },
+    {
+      "path": "head-blender-v10/ui-before-v11.blend",
+      "originalPath": "teardown-out/head-blender-v10/ui-before-v11.blend",
+      "sha256": "37bab9ae3b2b49045dda906bcd39360dc62e810c7d528a9064f004540250b647",
+      "bytes": 2984392
+    },
+    {
+      "path": "head-blender-v11/ui-before-v12.blend",
+      "originalPath": "teardown-out/head-blender-v11/ui-before-v12.blend",
+      "sha256": "b49cfac67f2f258bc46f41b8e5f9fa6ecead263886a9fa5304533fdebd5c1fdf",
+      "bytes": 2873624
+    },
+    {
+      "path": "head-blender-v12/ui-before-v13.blend",
+      "originalPath": "teardown-out/head-blender-v12/ui-before-v13.blend",
+      "sha256": "6030d43a174d957a9f25fd1aa77847c0e0a1389031ba5d2499411ab4305abe38",
+      "bytes": 2873900
+    },
+    {
+      "path": "head-blender-v13/ui-before-v14.blend",
+      "originalPath": "teardown-out/head-blender-v13/ui-before-v14.blend",
+      "sha256": "315976ffea6b7a54f7a494e2271a8edf5764da3891cd9b01bbee4e3cb34d4ae1",
+      "bytes": 2886204
+    },
+    {
+      "path": "head-blender-v14/ui-before-v15.blend",
+      "originalPath": "teardown-out/head-blender-v14/ui-before-v15.blend",
+      "sha256": "6cd651dd4006967ab7753073ba36953839207257730e3e544d706b719b1c4760",
+      "bytes": 2918028
+    },
+    {
+      "path": "head-blender-v3/ui-before-v4.blend",
+      "originalPath": "teardown-out/head-blender-v3/ui-before-v4.blend",
+      "sha256": "248b274fe012d9c87d6c994964e3467aac675d23741726a9fc52f1f55962217b",
+      "bytes": 2411872
+    },
+    {
+      "path": "head-blender-v4/ui-before-v7.blend",
+      "originalPath": "teardown-out/head-blender-v4/ui-before-v7.blend",
+      "sha256": "3e3f46a26fcffb6deff89e76d5e1ce25c62b74c575c72714b97534f6c861d345",
+      "bytes": 2433148
+    },
+    {
+      "path": "head-blender-v8/ui-before-v9.blend",
+      "originalPath": "teardown-out/head-blender-v8/ui-before-v9.blend",
+      "sha256": "6015580aabf7d2a1136ae9b37d94df1e20e5c00150cdebbe94eddd711308d8b3",
+      "bytes": 3011292
+    },
+    {
+      "path": "head-blender-v9/ui-before-v10.blend",
+      "originalPath": "teardown-out/head-blender-v9/ui-before-v10.blend",
+      "sha256": "7e4fc02b491b3de30761cadb3bc7ddd6551c7c9c31f4c74739e62368ba344e08",
+      "bytes": 2984388
+    },
+    {
+      "path": "vane-section-experiment/deeper-roots.blend",
+      "originalPath": "teardown-out/vane-section-experiment/deeper-roots.blend",
+      "sha256": "489a591cc0c4af0f9cae4372b982b1a42abc9210c10f82b90dfb68de578d6aa7",
+      "bytes": 2883440
+    }
   ]
 }

@@ -21,6 +21,7 @@
 - 其余带版本号 `.blend` 为历史快照，不代表更好的造型。
 - `teardown-out/` 原路径仍被忽略；其中本次头部相关的 55 张参考裁图、历史渲染和诊断图已完整复制到 [history/](assets/freedom-head/history)，并随 Git 提交。[index.json](assets/freedom-head/history/index.json) 记录原路径、大小和 SHA-256，复制后已逐张校验。加上当前资源，共提交 70 张头部图片。
 - 历史图包含失败版本、参考图放大和诊断叠图；不能将它们全部理解为当前模型渲染。
+- 另将本地实验/UI 备份中的 12 个 `.blend` 场景复制到同一 `history/` 目录，校验值记录在 `index.json` 的 `models` 中；包括最初构建、截面实验和切换版本前保存的 UI 快照。加上当前资源，共提交 **30 个 `.blend`、1 个 GLB 和 70 张图片**。历史快照不代表已验收模型。
 
 ## 用户已经确认的方向
 

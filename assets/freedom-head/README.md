@@ -4,6 +4,8 @@
 
 `history/` 保存从本地实验目录归档的全部 55 张头部历史图片，`history/index.json` 记录原路径和校验值；其中包含参考裁图及失败版本，不能作为当前模型效果。
 
+同一目录还保存 12 个本地实验/UI 模型快照。整个头部资源目录共保留 30 个 `.blend` 场景、1 个 GLB 和 70 张图片。
+
 - `reference/head-six-views.png`：使用内置 ImageGen，以 `reference/freedom/sheet.webp` 为身份参考生成的六视图。背面、顶部和不可见结构包含推断，不能作为精确尺寸依据。
 - `freedom-head.blend`：当前 V19 可编辑 Blender 3.1.2 场景，144 个独立网格部件，包含相机和灯光。
 - `freedom-head-red-armor-v19.blend`：当前版本的独立文件；默认以灰模检查形状。
