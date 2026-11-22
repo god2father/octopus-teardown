@@ -23,6 +23,55 @@
 - 历史图包含失败版本、参考图放大和诊断叠图；不能将它们全部理解为当前模型渲染。
 - 另将本地实验/UI 备份中的 12 个 `.blend` 场景复制到同一 `history/` 目录，校验值记录在 `index.json` 的 `models` 中；包括最初构建、截面实验和切换版本前保存的 UI 快照。加上当前资源，共提交 **30 个 `.blend`、1 个 GLB 和 70 张图片**。历史快照不代表已验收模型。
 
+## 本机绝对路径（可直接使用）
+
+实际 Git 仓库是 `/Users/congt/workspace/octopus-teardown`，不是最初聊天工作目录 `/Users/congt/Documents/ChatGPT/仿生3D以及高达`。运行 Git、网页命令时显式进入实际仓库。
+
+| 内容 | 本地绝对路径 |
+|---|---|
+| 本交接文档 | `/Users/congt/workspace/octopus-teardown/HANDOFF.md` |
+| 上一轮交接原文 | `/Users/congt/workspace/octopus-teardown/HANDOFF-PREVIOUS.md` |
+| 最新 canonical Blender 场景 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/freedom-head.blend` |
+| 最新 V19 版本场景 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/freedom-head-red-armor-v19.blend` |
+| 最新 GLB | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/freedom-head.glb` |
+| 生成六视图参考 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/reference/head-six-views.png` |
+| 原始身份参考 | `/Users/congt/workspace/octopus-teardown/reference/freedom/sheet.webp` |
+| 部件定位与推断深度 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/reference/part-constraints.json` |
+| 最新三分之四实际渲染 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/renders/three-quarter.png` |
+| 最新其他实际渲染目录 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/renders/` |
+| 彩色参考/实际模型对照 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/reference-comparison.png` |
+| 参考/真实灰模对照 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/actual-clay-vs-reference.png` |
+| 历史图片与模型归档 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/history/` |
+| 历史资源原路径及 SHA-256 清单 | `/Users/congt/workspace/octopus-teardown/assets/freedom-head/history/index.json` |
+| 构建脚本 | `/Users/congt/workspace/octopus-teardown/scripts/blender/freedom_head.py` |
+| 几何检查脚本 | `/Users/congt/workspace/octopus-teardown/scripts/blender/review_head.py` |
+| 图片对比脚本 | `/Users/congt/workspace/octopus-teardown/scripts/blender/compare_head.py` |
+| 全部 Blender 辅助脚本目录 | `/Users/congt/workspace/octopus-teardown/scripts/blender/` |
+| 原本地实验目录（忽略，图片/模型已归档） | `/Users/congt/workspace/octopus-teardown/teardown-out/` |
+
+历史归档中每个文件的完整路径为上述 `history/` 加 `index.json` 内的 `path`；`originalPath` 是相对于仓库根目录的原始位置。
+
+## Blender 和执行环境
+
+- 应用：`/Applications/Blender.app`。
+- 可执行文件：`/Applications/Blender.app/Contents/MacOS/Blender`。
+- 本轮交接时重新执行 `--version` 确认：**Blender 3.1.2**，build date `2022-04-01`。不能直接假定 Blender 4.x/5.x 的节点、法线和导出 API 可用。
+- 实际建模方式：通过终端调用 Blender `--background --python`，脚本使用 `bpy`、`bmesh`、`mathutils`；未通过 Blender MCP 建模，未安装前述第三方候选 Skill/MCP。
+- GLB 导出：`bpy.ops.export_scene.gltf(..., export_format='GLB')`，只选中头部对象。
+- 渲染：Eevee，1000×1000 PNG，128 samples，Filmic / Medium High Contrast；灰模为单独的实际几何材质覆盖渲染。
+- 主审阅相机：正交，`ortho_scale=2.5`，位置 `(3,-8,2.2)`，目标 `(0,0,1.04)`。其他角度见 `manifest.json` 的 `reviewCameraPositions`。
+- 主视图定位与对照参数均来自 `part-constraints.json`，V15 后固定对齐；不要随意重新拟合后宣称造型变好。
+- 图片分析 Python：`/Users/congt/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3`，已具备 Pillow、NumPy。系统 `python3` 不一定具备这些包；SciPy 未安装。
+- GUI 曾通过 Codex 的原生界面工具操作，但最后的后台构建不等于 GUI 已加载新文件。先核对标题与 `bpy.data.filepath`，保留可能存在的用户修改。
+
+无需依赖当前工作目录的绝对路径命令（第一条会重建并覆盖当前输出）：
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender --background --python /Users/congt/workspace/octopus-teardown/scripts/blender/freedom_head.py
+/Applications/Blender.app/Contents/MacOS/Blender --background /Users/congt/workspace/octopus-teardown/assets/freedom-head/freedom-head.blend --python /Users/congt/workspace/octopus-teardown/scripts/blender/review_head.py
+/Users/congt/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 /Users/congt/workspace/octopus-teardown/scripts/blender/compare_head.py
+```
+
 ## 用户已经确认的方向
 
 1. **主轮廓标准是生成的三分之四视图**，正面和侧面只作辅助。生成的不同视图本身存在不一致。
