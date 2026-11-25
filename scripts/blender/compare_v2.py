@@ -15,8 +15,8 @@ REF_DIR = BASE / "ref"
 VER_DIR = BASE / VERSION_TAG
 RND_DIR = VER_DIR / "renders"
 
-font_lg = ImageFont.load_default(size=20)
-font_sm = ImageFont.load_default(size=15)
+font_lg = ImageFont.load_default(size=18)
+font_sm = ImageFont.load_default(size=14)
 
 def fit_square(img, size=500, bg=(135, 135, 138)):
     im = img.convert("RGB")
@@ -58,7 +58,8 @@ def build_grid(mode, out_name, views):
 
         y1 = pad + hdr + cell + pad
         mode_title = "CLAY" if mode == "clay" else "SHADED"
-        draw.text((x0 + 8, y1 + 7), f"MODEL {VERSION_TAG} ({mode_title}) / {vlabel}", font=font_lg, fill=(15, 60, 120))
+        short_ver = VERSION_TAG.split("-")[0]
+        draw.text((x0 + 8, y1 + 8), f"{short_ver} ({mode_title}) / {vlabel}", font=font_lg, fill=(15, 60, 120))
         canvas.paste(rnd_sq, (x0, y1 + hdr))
 
     footer = f"{VERSION_TAG} | Pure side-by-side comparison. Model panels contain ZERO reference pixels."

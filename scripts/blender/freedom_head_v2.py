@@ -1,25 +1,24 @@
-"""Freedom Gundam Head — Stage 3 Secondary Details & Physical Panel Seams (v6-secondary-details, Blender 3.1.2).
+"""Freedom Gundam Head — Stage 3 Details Polish (v7-details-polish, Blender 3.1.2).
 
-Built directly on the auditor-approved v5-macro-final base (NM=0, BND=0, vent_bleed=0):
-  1. Real 3D Physical Recessed Panel Seams (sculpted directly into manifold grids — ZERO booleans,
-     ZERO floating seam tubes, strictly NM=0 & readable in BOTH pure clay and shaded renders!):
-     - Helmet upper longitudinal crown seam (TOP, 3/4, FRONT, BACK, REAR 3/4);
-     - Helmet horizontal belt seam running from temple back around occiput (SIDE, 3/4, BACK);
-     - Helmet transverse crown & rear-occiput panel seams;
-     - Central Crest 3 crisp transverse armor segment grooves (SIDE, TOP, REAR 3/4).
-  2. Secondary Mechanical Recesses & Armor Steps matching reference 6-views:
-     - Multi-stepped Temple Vulcan socket (beveled outer armor shroud + dark recess ring
-       + machined steel barrel + deep black bore);
-     - Ear-side armor top-chamfer rectangular service slot & stepped lateral armor ridge;
-     - Rear helmet upper dual rectangular recess ports (inner back pair + outer side pair)
-       & rear lower central locking tab;
-     - Sculpted white chin collar socket framing upper sides of the red chin keel;
-     - Upgraded 2-tier mechanical neck collar with crisp armored vertical segments.
-  3. Optical, Material & Micro-Proportion Refinements:
-     - Deepened cool steel-blue optical glass forehead camera lens + stepped dark/steel bezel
-       + crisp top hood step trim;
-     - Inner Sub V-Fin tilted outward ~2.5 deg (FrontElev ~77.5 deg) per auditor P2 polish;
-     - Subtle master-grade cool-white panel accents on secondary recessed trims.
+Directly resolves ALL P0, P1, and P2 findings from the v6 independent audit:
+  P0-1: Replaced oversized 0.016-0.020 "globe grid" black seams with authentic MG/RG
+        hairline 3D U-channel seams (~0.0048 total width, 0.0045 depth):
+        - White sloped channel walls + ultra-narrow (~0.0022) soft cool-gray floor only
+          (pure physical clay in Clay mode, no black marker paint!);
+        - Removed artificial full-dome cross-grid lines; kept only true reference paths:
+          helmet upper crown seam, upward-sweeping belt seam, NEW rear-center vertical
+          back seam, 2 fine crest transverse seams, and 1 clean ear-armor seam behind
+          LowerStepPlate.
+  P0-2: Surface-snapped all 3 secondary recessed ports (Rear UpperInnerPort, Rear
+        SideUpperSlot, VentPod ShoulderSlot) onto evaluated host armor via BVHTree
+        find_nearest so frames sit flush & dark recesses are 100% visible (0% buried!),
+        plus reshaped RearNapeLintel cleanly inside rear wing contour (zero sharp horns!).
+  P1-1: Surface-snapped Rear CenterLockTab in distinct cool medium-gray with thin dark
+        base collar (zero side-silhouette horn); crisp proud EarSide LowerStepPlate cleanly
+        separated from the fine ear seam.
+  P1-2: Lowered all 4 small port frame bevel widths to 0.0010 (0 Bevel clamp warnings);
+        deepened Sensor_Blue to rich cool steel-blue optical glass; surface-snapped
+        Temple Vulcan pod cleanly along temple normal so upper rim is uncut in all views.
 """
 
 import bpy
@@ -30,7 +29,7 @@ from pathlib import Path
 from mathutils import Vector, Matrix
 from mathutils.bvhtree import BVHTree
 
-VERSION_TAG = "v6-secondary-details"
+VERSION_TAG = "v7-details-polish"
 ROOT = Path(__file__).resolve().parents[2]
 OUT_DIR = ROOT / "assets" / "freedom-head" / "v2-rebuild" / VERSION_TAG
 RENDER_DIR = OUT_DIR / "renders"
@@ -66,7 +65,7 @@ def make_mat(name, color, metallic=0.08, roughness=0.38, emission=None, em_stren
     bsdf.inputs["Specular"].default_value = 0.48
     if clearcoat > 0:
         bsdf.inputs["Clearcoat"].default_value = clearcoat
-        bsdf.inputs["Clearcoat Roughness"].default_value = 0.12
+        bsdf.inputs["Clearcoat Roughness"].default_value = 0.10
     if emission is not None and em_strength > 0:
         bsdf.inputs["Emission"].default_value = (*emission, 1.0)
         bsdf.inputs["Emission Strength"].default_value = em_strength
@@ -76,7 +75,10 @@ def make_mat(name, color, metallic=0.08, roughness=0.38, emission=None, em_stren
 
 MAT_WHITE = make_mat("Armor_White", (0.76, 0.77, 0.79), metallic=0.08, roughness=0.36)
 MAT_WHITE_COOL = make_mat("Armor_White_Cool", (0.62, 0.64, 0.68), metallic=0.10, roughness=0.40)
-MAT_SEAM = make_mat("Panel_Seam_Dark", (0.09, 0.10, 0.115), metallic=0.08, roughness=0.62)
+# Distinct cool medium-gray for Rear CenterLockTab (P1-1)
+MAT_TRIM_GRAY = make_mat("Armor_Trim_Gray", (0.43, 0.45, 0.49), metallic=0.14, roughness=0.42)
+# Soft neutral cool-gray ONLY for ultra-thin (~0.0022) recessed seam bottoms (P0-1)
+MAT_SEAM = make_mat("Panel_Seam_Soft", (0.24, 0.25, 0.28), metallic=0.06, roughness=0.62)
 MAT_RED = make_mat("Armor_Red", (0.56, 0.028, 0.026), metallic=0.12, roughness=0.32, clearcoat=0.15)
 MAT_GOLD = make_mat("VFin_Gold", (0.88, 0.49, 0.030), metallic=0.58, roughness=0.24, clearcoat=0.15)
 MAT_DARK = make_mat("Frame_Graphite", (0.068, 0.072, 0.082), metallic=0.45, roughness=0.40)
@@ -90,18 +92,17 @@ MAT_EYE_CORE = make_mat(
     "Sensor_Amber_Core", (1.0, 0.43, 0.012), metallic=0.14, roughness=0.14,
     emission=(1.0, 0.39, 0.008), em_strength=1.00
 )
-# P2-2 refined cool steel-blue optical glass forehead lens
+# P1-2: Deep cool steel-blue optical glass forehead lens (NOT bright sky blue!)
 MAT_BLUE = make_mat(
-    "Sensor_Blue", (0.095, 0.195, 0.300), metallic=0.48, roughness=0.10,
-    emission=(0.065, 0.145, 0.230), em_strength=0.18, clearcoat=0.65
+    "Sensor_Blue", (0.036, 0.080, 0.140), metallic=0.56, roughness=0.08,
+    emission=(0.024, 0.062, 0.112), em_strength=0.16, clearcoat=0.75
 )
 MAT_CLAY = make_mat("Review_Clay", (0.48, 0.49, 0.51), metallic=0.0, roughness=0.58)
-MAT_CLAY_SEAM = make_mat("Review_Clay_Seam", (0.16, 0.165, 0.175), metallic=0.0, roughness=0.72)
 MAT_CLAY_DARK = make_mat("Review_Clay_Cavity", (0.055, 0.060, 0.065), metallic=0.0, roughness=0.84)
 
 
 # ---------------------------------------------------------------------------
-# Math / Grid Groove Helpers (Real 3D Physical Seams with STRICT NM=0!)
+# Math / Hairline 3D U-Channel Groove Helpers (P0-1: ~0.0048 wide, white walls!)
 # ---------------------------------------------------------------------------
 def catmull_rom(p0, p1, p2, p3, t):
     t2 = t * t
@@ -136,86 +137,50 @@ def resample_stations(stations, subdivs_per_seg=2, preserve_sharp_rows=()):
     return out
 
 
-def insert_col_grooves(outer_grid, groove_cols, center_pt, half_w_frac=0.055, depth=0.0065):
-    """Insert real 3D recessed V/U-grooves along specified columns of a grid.
-    Returns (new_grid, seam_col_indices, mapped_old_to_new_cols)."""
+def step_toward(a, b, dist):
+    d = b - a
+    L = d.length
+    if L < 1e-6:
+        return a.copy()
+    return a + d * min(0.35, dist / L)
+
+
+def insert_col_u_grooves(outer_grid, groove_cols, center_pt,
+                         outer_half_w=0.0025, floor_half_w=0.0011, depth=0.0046):
+    """P0-1: Insert ultra-fine 4-vertex U-channel grooves (~0.0050 opening width,
+    0.0022 floor width) along specified columns. ONLY the narrow floor cell is marked
+    as seam material; both sloped walls remain clean Armor_White!"""
     R = len(outer_grid)
     C = len(outer_grid[0])
     new_grid = [[] for _ in range(R)]
-    seam_cols = set()
+    floor_cols = set()
     col_map = {}
 
     for c in range(C):
         if c in groove_cols and 0 < c < C - 1:
-            base_idx = len(new_grid[0])
-            col_map[c] = base_idx + 1  # center of groove
-            seam_cols.add(base_idx)
-            seam_cols.add(base_idx + 1)
+            base = len(new_grid[0])
+            col_map[c] = base + 1
+            floor_cols.add(base + 1)  # ONLY the single narrow center floor cell (p_ml -> p_mr)!
             for r in range(R):
                 p_prev = Vector(outer_grid[r][c - 1])
                 p_cur = Vector(outer_grid[r][c])
                 p_next = Vector(outer_grid[r][c + 1])
-                inward = (center_pt - p_cur)
+                inward = center_pt - p_cur
                 if inward.length > 1e-5:
                     inward.normalize()
-                # Clamp groove offset to stay sleek even on short spans
-                p_l = p_cur.lerp(p_prev, half_w_frac)
-                p_r = p_cur.lerp(p_next, half_w_frac)
-                # Keep mirror plane X=0 intact if on symmetry line!
                 off = inward * depth
                 if abs(p_cur.x) < 1e-4:
                     off.x = 0.0
-                p_mid = p_cur + off
-                new_grid[r].extend([tuple(p_l), tuple(p_mid), tuple(p_r)])
+                p_l = step_toward(p_cur, p_prev, outer_half_w)
+                p_ml = step_toward(p_cur, p_prev, floor_half_w) + off
+                p_mr = step_toward(p_cur, p_next, floor_half_w) + off
+                p_r = step_toward(p_cur, p_next, outer_half_w)
+                new_grid[r].extend([tuple(p_l), tuple(p_ml), tuple(p_mr), tuple(p_r)])
         else:
             col_map[c] = len(new_grid[0])
             for r in range(R):
                 new_grid[r].append(outer_grid[r][c])
-    return new_grid, seam_cols, col_map
-
-
-def insert_row_grooves(outer_grid, groove_rows, center_pt, half_w_frac=0.08, depth=0.0060,
-                       col_range=None):
-    """Insert real 3D recessed transverse grooves along specified rows of a grid.
-    If col_range=(c_start, c_end) is given, only indent columns in [c_start, c_end]."""
-    R = len(outer_grid)
-    C = len(outer_grid[0])
-    new_grid = []
-    seam_rows = set()
-    row_map = {}
-
-    for r in range(R):
-        if r in groove_rows and 0 < r < R - 1:
-            base_r = len(new_grid)
-            row_map[r] = base_r + 1
-            seam_rows.add(base_r)
-            seam_rows.add(base_r + 1)
-            row_l, row_m, row_r = [], [], []
-            for c in range(C):
-                p_prev = Vector(outer_grid[r - 1][c])
-                p_cur = Vector(outer_grid[r][c])
-                p_next = Vector(outer_grid[r + 1][c])
-                p_a = p_cur.lerp(p_prev, half_w_frac)
-                p_b = p_cur.lerp(p_next, half_w_frac)
-                in_band = (col_range is None) or (col_range[0] <= c <= col_range[1])
-                if in_band:
-                    inward = center_pt - p_cur
-                    if inward.length > 1e-5:
-                        inward.normalize()
-                    off = inward * depth
-                    if abs(p_cur.x) < 1e-4:
-                        off.x = 0.0
-                    p_mid = p_cur + off
-                else:
-                    p_mid = p_cur
-                row_l.append(tuple(p_a))
-                row_m.append(tuple(p_mid))
-                row_r.append(tuple(p_b))
-            new_grid.extend([row_l, row_m, row_r])
-        else:
-            row_map[r] = len(new_grid)
-            new_grid.append(list(outer_grid[r]))
-    return new_grid, seam_rows, row_map
+    return new_grid, floor_cols, col_map
 
 
 # ---------------------------------------------------------------------------
@@ -448,39 +413,63 @@ def make_box_oriented(name, p_center, size_xyz, rot_euler=(0, 0, 0),
     return finalize_mesh(name, bm, mat, bevel_width=bevel_width, mirror_x=mirror_x)
 
 
-def make_recessed_port(name, center, normal, width, height, frame_w, depth,
-                       frame_mat=MAT_WHITE_COOL, pocket_mat=MAT_DARK, mirror_x=True):
-    """Build a clean, watertight beveled rectangular armor recess port oriented along surface normal."""
-    n = Vector(normal).normalized()
-    up_ref = Vector((0.0, 0.0, 1.0)) if abs(n.z) < 0.9 else Vector((0.0, 1.0, 0.0))
+def sample_host_surface(host_obj, approx_pt, out_hint=None):
+    """P0-2: Sample exact outer surface point & outward normal on evaluated host mesh via BVHTree."""
+    deps = bpy.context.evaluated_depsgraph_get()
+    eval_obj = host_obj.evaluated_get(deps)
+    bvh = BVHTree.FromObject(eval_obj, deps)
+    loc, norm, _, _ = bvh.find_nearest(Vector(approx_pt))
+    n = norm.normalized()
+    if out_hint is not None and n.dot(Vector(out_hint)) < 0:
+        n = -n
+    return loc, n
+
+
+SURFACE_PORTS_AUDIT = []
+
+
+def make_surface_snapped_port(name, host_obj, approx_pt, out_hint, width, height,
+                              frame_w, proud_h=0.008, embed_d=0.018,
+                              frame_mat=MAT_WHITE_COOL, pocket_mat=MAT_DARK,
+                              mirror_x=True, roll_rad=0.0):
+    """P0-2 & P1-2: Build a watertight beveled rectangular recess port snapped strictly
+    to the host outer surface via BVHTree so frame is flush (>=85% exposed) and dark pocket
+    backing sits cleanly above host skin (100% visible, 0% buried, 0 bevel clamp!)."""
+    loc, n = sample_host_surface(host_obj, approx_pt, out_hint)
+    up_ref = Vector((0.0, 0.0, 1.0)) if abs(n.z) < 0.88 else Vector((0.0, 1.0, 0.0))
     right = up_ref.cross(n).normalized()
     up = n.cross(right).normalized()
-    c = Vector(center)
+    if abs(roll_rad) > 1e-6:
+        cr, sr = math.cos(roll_rad), math.sin(roll_rad)
+        right, up = (right * cr + up * sr).normalized(), (-right * sr + up * cr).normalized()
 
     hw, hh = width * 0.5, height * 0.5
     iw, ih = hw - frame_w, hh - frame_w
 
     def rect_pts(hx, hz, offset_n):
         return [
-            tuple(c + right * (-hx) + up * ( hz) + n * offset_n),
-            tuple(c + right * ( hx) + up * ( hz) + n * offset_n),
-            tuple(c + right * ( hx) + up * (-hz) + n * offset_n),
-            tuple(c + right * (-hx) + up * (-hz) + n * offset_n),
+            tuple(loc + right * (-hx) + up * ( hz) + n * offset_n),
+            tuple(loc + right * ( hx) + up * ( hz) + n * offset_n),
+            tuple(loc + right * ( hx) + up * (-hz) + n * offset_n),
+            tuple(loc + right * (-hx) + up * (-hz) + n * offset_n),
         ]
 
-    # Beveled outer collar frame hugging the surface (+0.005 proud, -depth into shell)
+    # Chamfered outer bezel collar proud by +proud_h, rooted -embed_d into host armor
+    # P1-2: bevel_width=0.0010 -> strictly 0 bevel clamp!
     make_hollow_frame(
         f"{name}_Frame",
-        rect_pts(hw, hh, 0.006), rect_pts(iw, ih, 0.006),
-        rect_pts(hw + 0.004, hh + 0.004, -depth), rect_pts(iw, ih, -depth),
-        frame_mat, bevel_width=0.0018, mirror_x=mirror_x
+        rect_pts(hw, hh, proud_h), rect_pts(iw, ih, proud_h),
+        rect_pts(hw + 0.003, hh + 0.003, -embed_d), rect_pts(iw, ih, -embed_d),
+        frame_mat, bevel_width=0.0010, mirror_x=mirror_x
     )
-    # Recessed dark backing block inside the collar
+    # Dark pocket backing sits at +0.0025 (strictly outside curved host skin, recessed 0.0055
+    # inside the +0.008 bezel collar!) -> 100% visible, deep dark recess shadow!
     make_loft(
         f"{name}_Backing",
-        [rect_pts(iw + 0.002, ih + 0.002, -0.008), rect_pts(iw + 0.002, ih + 0.002, -depth)],
-        pocket_mat, closed_u=True, bevel_width=0.001, mirror_x=mirror_x, smooth_faces=False
+        [rect_pts(iw + 0.0015, ih + 0.0015, 0.0028), rect_pts(iw + 0.0015, ih + 0.0015, -embed_d)],
+        pocket_mat, closed_u=True, bevel_width=0.0008, mirror_x=mirror_x, smooth_faces=False
     )
+    SURFACE_PORTS_AUDIT.append((name, host_obj.name, loc + n * 0.0028, n))
 
 
 def make_cylinder_z(name, center, r_bot, r_top, height, segs, mat, bevel_width=0.004):
@@ -494,12 +483,11 @@ def make_cylinder_z(name, center, r_bot, r_top, height, segs, mat, bevel_width=0
 
 
 # ===========================================================================
-# 1. UPGRADED 2-TIER MECHANICAL NECK COLLAR (Stage 3 Detail!)
+# 1. 2-TIER MECHANICAL NECK COLLAR (Approved in v6!)
 # ===========================================================================
 make_cylinder_z("01_Neck_BaseFlange", (0.0, 0.0, 0.042), 0.324, 0.320, 0.084, 32, MAT_DARK, 0.004)
 make_cylinder_z("01_Neck_MidRing", (0.0, 0.0, 0.112), 0.312, 0.305, 0.056, 32, MAT_METAL, 0.003)
 make_cylinder_z("01_Neck_CoreShaft", (0.0, 0.0, 0.245), 0.280, 0.272, 0.23, 32, MAT_BLACK, 0.003)
-# Crisp segmented vertical hydraulic armor plates around neck with clear dark shadow gaps
 for i in range(10):
     ang = (i + 0.5) * math.tau / 10.0
     cx = 0.296 * math.sin(ang)
@@ -508,13 +496,13 @@ for i in range(10):
         f"01_Neck_ArmorPlate_{i}", (cx, cy, 0.220), (0.125, 0.044, 0.185),
         rot_euler=(0, 0, ang), mat=MAT_DARK, bevel_width=0.0035
     )
-# Front mechanical center brace on neck (visible under red chin in Front & 3/4)
 make_box_oriented("01_Neck_FrontCenterBrace", (0.0, -0.308, 0.165), (0.145, 0.036, 0.145), mat=MAT_DARK, bevel_width=0.004)
 make_cylinder_z("01_Internal_CraniumCore", (0.0, 0.08, 0.82), 0.27, 0.26, 0.80, 20, MAT_BLACK, 0.0)
 
 
 # ===========================================================================
-# 2. POLYHEDRAL HELMET SHELL WITH REAL 3D PHYSICAL PANEL SEAMS (Stage 3!)
+# 2. POLYHEDRAL HELMET SHELL WITH HAIRLINE 3D SEAMS + REAR VERTICAL CENTER SEAM
+#    (P0-1: ZERO globe-grid lines, 0.0050-wide U-channels, white walls!)
 # ===========================================================================
 helmet_ctrl = [
     # S0: Front forehead arch
@@ -537,7 +525,7 @@ helmet_ctrl = [
         (0.285, -0.17, 0.50),
         (0.250, -0.16, 0.44),
     ],
-    # S2: Anterior ear line (safely behind vent rear wall)
+    # S2: Anterior ear line
     [
         (0.168,  0.00, 1.49),
         (0.345,  0.00, 1.38),
@@ -589,24 +577,31 @@ helmet_ctrl = [
     ],
 ]
 
-# Resample base grid (10 rows: r=0..9 -> S0=0, S1=2, S2=3, S3=5, S4=7, S5=8, S6=9)
 helmet_base = resample_stations(helmet_ctrl, subdivs_per_seg=2, preserve_sharp_rows=(1, 4, 5))
 center_ref = Vector((0.0, 0.08, 0.86))
 
-# Insert real 3D physical recessed panel grooves!
-# 1) Longitudinal grooves along col 1 (upper crown seam) & col 3 (horizontal belt seam!)
-helmet_g1, seam_cols, col_map = insert_col_grooves(
-    helmet_base, groove_cols=(1, 3), center_pt=center_ref, half_w_frac=0.060, depth=0.0068
-)
-# 2) Transverse panel seams across crown & rear occiput:
-#    row 2 (temple-anterior crown split), row 5 (mid-crown transverse seam), row 7 (rear shoulder seam)
-#    Apply transverse grooves only across upper/outer visible cols (0..col_map[4]) so tucked vent area is untouched!
-helmet_grid, seam_rows, row_map = insert_row_grooves(
-    helmet_g1, groove_rows=(2, 5, 7), center_pt=center_ref, half_w_frac=0.085, depth=0.0058,
-    col_range=(0, col_map[4])
+# P0-1: Add iconic BACK vertical centerline seam right at X=0 by inserting two hairline
+# rows just before S6: shoulder at X=0.0024 (flush) + floor edge at X=0.0010 (stepped -0.0045 in Y)
+# + mirror plane at X=0.000 (stepped -0.0045 in Y)!
+s_prev = helmet_base[-2]
+s_back = helmet_base[-1]
+row_back_sh = [tuple(step_toward(Vector(b), Vector(a), 0.0025)) for a, b in zip(s_prev, s_back)]
+row_back_fl = [
+    (step_toward(Vector(b), Vector(a), 0.0011).x, b[1] - 0.0045, b[2])
+    for a, b in zip(s_prev, s_back)
+]
+row_back_ctr = [(0.0, b[1] - 0.0045, b[2]) for b in s_back]
+helmet_with_back_seam = helmet_base[:-1] + [row_back_sh, row_back_fl, row_back_ctr]
+
+# P0-1: Insert ONLY the 2 authentic longitudinal hairline U-grooves:
+#   col 1 = upper crown ridge seam (TOP, 3/4, BACK)
+#   col 3 = upward-sweeping horizontal belt seam (SIDE, 3/4, BACK)
+# NO artificial cross-dome latitude grid lines!
+helmet_grid, floor_cols, col_map = insert_col_u_grooves(
+    helmet_with_back_seam, groove_cols=(1, 3), center_pt=center_ref,
+    outer_half_w=0.0025, floor_half_w=0.0011, depth=0.0046
 )
 
-# Build inner offset shell cleanly from the grooved outer grid
 helmet_inner = []
 for si, row in enumerate(helmet_grid):
     in_row = []
@@ -621,30 +616,28 @@ for si, row in enumerate(helmet_grid):
         in_row.append(tuple(v + off))
     helmet_inner.append(in_row)
 
-# Assign dark panel-seam material (slot 1) to ONLY the recessed physical groove walls!
+# Assign MAT_SEAM (slot 1) STRICTLY to the ultra-narrow groove floor cells ONLY!
 helmet_cell_mats = {}
 R_h = len(helmet_grid)
 C_h = len(helmet_grid[0])
+back_floor_row = R_h - 2  # row between row_back_fl and row_back_ctr (X in [0.000, 0.0011])!
 for r in range(R_h - 1):
     for c in range(C_h - 1):
-        # Longitudinal belt & crown grooves (skip tucked front lower cells behind vent)
-        if c in seam_cols:
-            # Keep crown groove full length, belt groove full length
+        if c in floor_cols:
             helmet_cell_mats[(r, c)] = 1
-        # Transverse armor seam grooves on upper/mid visible helmet
-        if r in seam_rows and c < col_map[4]:
+        if r == back_floor_row and c < col_map[5]:
             helmet_cell_mats[(r, c)] = 1
 
-make_solid_shell_from_grid(
+helmet_obj = make_solid_shell_from_grid(
     "02_Helmet_PolyhedralShell", helmet_grid, helmet_inner,
-    MAT_WHITE, bevel_width=0.0022, auto_smooth_deg=24.0,
+    MAT_WHITE, bevel_width=0.0020, auto_smooth_deg=24.0,
     mirror_x=True, smooth_faces=True,
     sharp_cols=(col_map[1], col_map[2], col_map[3], col_map[5]),
-    sharp_rows=(row_map[7], row_map[8]),
+    sharp_rows=(R_h - 5, R_h - 4),
     cell_mat_map=helmet_cell_mats, extra_mats=(MAT_SEAM,)
 )
 
-# Flush Rear-Nape Side Skirt Wings + Central Rear Exhaust
+# Flush Rear-Nape Side Skirt Wings + Clean Tapered Lintel (P0-2: ZERO protruding horns!)
 nape_wing_sections = [
     [(0.165, 0.34, 0.50), (0.435, 0.34, 0.47), (0.375, 0.62, 0.48), (0.165, 0.67, 0.49)],
     [(0.172, 0.34, 0.345), (0.395, 0.34, 0.365), (0.315, 0.62, 0.335), (0.172, 0.63, 0.335)],
@@ -653,7 +646,14 @@ make_loft(
     "02_Helmet_RearNapeWing", nape_wing_sections, MAT_WHITE,
     closed_u=True, bevel_width=0.0045, mirror_x=True, smooth_faces=False
 )
-make_box_oriented("02_Helmet_RearNapeLintel", (0.0, 0.62, 0.495), (0.35, 0.14, 0.050), mat=MAT_WHITE, bevel_width=0.004)
+
+# P0-2 FIX: Slim, flush-tapered RearNapeLintel tucked cleanly between the two nape wings!
+lintel_sec = [
+    [(-0.172, 0.50, 0.505), (0.172, 0.50, 0.505), (0.172, 0.655, 0.495), (-0.172, 0.655, 0.495)],
+    [(-0.172, 0.50, 0.468), (0.172, 0.50, 0.468), (0.172, 0.635, 0.472), (-0.172, 0.635, 0.472)],
+]
+make_loft("02_Helmet_RearNapeLintel", lintel_sec, MAT_WHITE, closed_u=True, bevel_width=0.003, smooth_faces=False)
+
 make_box_oriented("02_Helmet_RearExhaustWell", (0.0, 0.550, 0.415), (0.335, 0.14, 0.148), mat=MAT_DARK, bevel_width=0.003)
 for k in range(4):
     make_box_oriented(
@@ -663,35 +663,59 @@ for k in range(4):
         mat=MAT_WHITE_COOL, bevel_width=0.002
     )
 
-# Stage 3 Rear Occiput Mechanical Details (visible in BACK, REAR 3/4, SIDE!)
-# 1) Rear upper inner recessed rectangular slots (flanking rear spine on BACK view!)
-make_recessed_port(
-    "02_Rear_UpperInnerPort",
-    center=(0.245, 0.725, 1.070), normal=(0.38, 0.90, 0.22),
-    width=0.072, height=0.095, frame_w=0.014, depth=0.032,
+# P0-2 FIX: Surface-snapped Rear Occiput Mechanical Ports (100% visible, 0% buried!)
+# 1) Rear upper inner vertical rectangular slots (flanking rear spine in BACK & REAR 3/4!)
+make_surface_snapped_port(
+    "02_Rear_UpperInnerPort", helmet_obj,
+    approx_pt=(0.245, 0.74, 1.075), out_hint=(0.35, 0.90, 0.25),
+    width=0.068, height=0.092, frame_w=0.012, proud_h=0.007, embed_d=0.022,
     frame_mat=MAT_WHITE_COOL, pocket_mat=MAT_DARK, mirror_x=True
 )
-# 2) Rear-side horizontal rectangular recessed slot (clearly seen in SIDE & REAR 3/4!)
-make_recessed_port(
-    "02_Rear_SideUpperSlot",
-    center=(0.485, 0.415, 0.960), normal=(0.88, 0.45, 0.10),
-    width=0.110, height=0.052, frame_w=0.012, depth=0.030,
+# 2) Rear-side horizontal rectangular recessed slot (clearly visible in SIDE & REAR 3/4!)
+make_surface_snapped_port(
+    "02_Rear_SideUpperSlot", helmet_obj,
+    approx_pt=(0.515, 0.43, 0.965), out_hint=(0.88, 0.45, 0.10),
+    width=0.108, height=0.048, frame_w=0.011, proud_h=0.007, embed_d=0.022,
     frame_mat=MAT_WHITE_COOL, pocket_mat=MAT_DARK, mirror_x=True
 )
-# 3) Rear lower-center stepped locking tab (clearly visible in BACK view above exhaust!)
-make_box_oriented("02_Rear_CenterLockTab", (0.0, 0.785, 0.690), (0.125, 0.040, 0.088), rot_euler=(-0.18, 0, 0), mat=MAT_WHITE_COOL, bevel_width=0.0035)
+
+# P1-1 FIX: Surface-snapped Rear CenterLockTab (cool medium-gray + thin dark recessed collar,
+# sits flush on rear center vertical seam with ZERO side-silhouette horn!)
+def make_rear_center_lock_tab():
+    loc, n = sample_host_surface(helmet_obj, (0.0, 0.82, 0.700), out_hint=(0.0, 1.0, -0.15))
+    # Force exact symmetry X=0
+    loc = Vector((0.0, loc.y, loc.z))
+    n = Vector((0.0, n.y, n.z)).normalized()
+    right = Vector((1.0, 0.0, 0.0))
+    up = n.cross(right).normalized()
+    if up.z < 0:
+        up = -up
+
+    def rpts(hx, hz, off):
+        return [
+            tuple(loc + right * (-hx) + up * ( hz) + n * off),
+            tuple(loc + right * ( hx) + up * ( hz) + n * off),
+            tuple(loc + right * ( hx) + up * (-hz) + n * off),
+            tuple(loc + right * (-hx) + up * (-hz) + n * off),
+        ]
+    # Thin dark perimeter collar (+0.003 proud)
+    make_loft("02_Rear_CenterLockSeam", [rpts(0.064, 0.046, 0.003), rpts(0.064, 0.046, -0.016)], MAT_DARK, closed_u=True, bevel_width=0.001, smooth_faces=False)
+    # Crisp cool-medium-gray chamfered tab (+0.009 proud -> clean subtle relief, zero side horn!)
+    make_loft("02_Rear_CenterLockTab", [rpts(0.056, 0.039, 0.009), rpts(0.060, 0.042, -0.012)], MAT_TRIM_GRAY, closed_u=True, bevel_width=0.0022, smooth_faces=False)
+
+make_rear_center_lock_tab()
 
 
 # ===========================================================================
-# 3. SEGMENTED ARCHED CENTRAL CREST + REFINED CAMERA HOOD & STEEL-BLUE LENS
+# 3. CREST WITH 2 HAIRLINE U-CHANNEL SEAMS + DEEP STEEL-BLUE CAMERA LENS
 # ===========================================================================
 crest_ctrl = [
-    (-0.49, 1.675, 0.102, 1.575, 0.140, 1.27, 0.154),  # 0: Front hood peak
-    (-0.22, 1.725, 0.114, 1.620, 0.155, 1.38, 0.168),  # 1: Anterior arch
-    ( 0.08, 1.715, 0.122, 1.615, 0.165, 1.46, 0.178),  # 2: Mid-crown apex
-    ( 0.38, 1.650, 0.122, 1.550, 0.165, 1.40, 0.176),  # 3: Posterior arch
-    ( 0.64, 1.530, 0.118, 1.440, 0.155, 1.29, 0.164),  # 4: Rear crest shoulder
-    ( 0.80, 1.440, 0.108, 1.380, 0.140, 1.32, 0.145),  # 5: Proud overhanging rear tail
+    (-0.49, 1.675, 0.102, 1.575, 0.140, 1.27, 0.154),
+    (-0.22, 1.725, 0.114, 1.620, 0.155, 1.38, 0.168),
+    ( 0.08, 1.715, 0.122, 1.615, 0.165, 1.46, 0.178),
+    ( 0.38, 1.650, 0.122, 1.550, 0.165, 1.40, 0.176),
+    ( 0.64, 1.530, 0.118, 1.440, 0.155, 1.29, 0.164),
+    ( 0.80, 1.440, 0.108, 1.380, 0.140, 1.32, 0.145),
 ]
 crest_raw = [
     [(-wt, y, zt), (wt, y, zt), (wm, y, zm), (wb, y, zb), (-wb, y, zb), (-wm, y, zm)]
@@ -699,36 +723,33 @@ crest_raw = [
 ]
 crest_base = resample_stations(crest_raw, subdivs_per_seg=2, preserve_sharp_rows=(4,))
 
-# Insert 3 crisp physical transverse panel grooves across the Central Crest (rows 2, 5, 8)!
+# P0-1: 2 hairline 0.0050-wide U-channel transverse seams on Crest (rows 3 and 7)
+# White sloped walls, ONLY the ultra-thin 0.0022 floor cell gets MAT_SEAM!
 crest_grooved = []
-crest_seam_rows = set()
-crest_center = Vector((0.0, 0.15, 1.30))
+crest_floor_rows = set()
 for r in range(len(crest_base)):
-    if r in (2, 5, 8) and 0 < r < len(crest_base) - 1:
+    if r in (3, 7) and 0 < r < len(crest_base) - 1:
         br = len(crest_grooved)
-        crest_seam_rows.add(br)
-        crest_seam_rows.add(br + 1)
-        rl, rm, rr = [], [], []
+        crest_floor_rows.add(br + 1)  # ONLY the single narrow center floor row!
+        rl, rml, rmr, rr = [], [], [], []
         for c in range(len(crest_base[r])):
             pp = Vector(crest_base[r - 1][c])
             pc = Vector(crest_base[r][c])
             pn = Vector(crest_base[r + 1][c])
-            pa = pc.lerp(pp, 0.09)
-            pb = pc.lerp(pn, 0.09)
-            # Indent top & side edges slightly inward toward crest spine axis
-            inward = Vector((0.0 if abs(pc.x) < 1e-4 else -math.copysign(0.0055, pc.x), 0.0, -0.0065 if c in (0, 1) else -0.002))
-            rl.append(tuple(pa))
-            rm.append(tuple(pc + inward))
-            rr.append(tuple(pb))
-        crest_grooved.extend([rl, rm, rr])
+            inward = Vector((0.0 if abs(pc.x) < 1e-4 else -math.copysign(0.0040, pc.x), 0.0, -0.0046 if c in (0, 1) else -0.0018))
+            rl.append(tuple(step_toward(pc, pp, 0.0025)))
+            rml.append(tuple(step_toward(pc, pp, 0.0011) + inward))
+            rmr.append(tuple(step_toward(pc, pn, 0.0011) + inward))
+            rr.append(tuple(step_toward(pc, pn, 0.0025)))
+        crest_grooved.extend([rl, rml, rmr, rr])
     else:
         crest_grooved.append(list(crest_base[r]))
 
 make_loft(
     "03_Crest_MainArch", crest_grooved, MAT_WHITE, closed_u=True,
-    bevel_width=0.0032, auto_smooth_deg=26.0, smooth_faces=True,
+    bevel_width=0.0025, auto_smooth_deg=26.0, smooth_faces=True,
     sharp_u_indices=(0, 1, 2, 3, 4, 5),
-    seam_row_indices=crest_seam_rows, extra_mats=(MAT_SEAM,)
+    seam_row_indices=crest_floor_rows, extra_mats=(MAT_SEAM,)
 )
 
 crest_rear_spine = [
@@ -738,7 +759,7 @@ crest_rear_spine = [
 make_loft("03_Crest_RearUnderSpine", crest_rear_spine, MAT_WHITE, closed_u=True, bevel_width=0.004, smooth_faces=False)
 make_box_oriented("03_Crest_RearSensorBox", (0.0, 0.705, 1.245), (0.130, 0.055, 0.100), rot_euler=(0.18, 0, 0), mat=MAT_DARK, bevel_width=0.002)
 
-# Front Sensor Camera Hood + Stepped Top Cap + Cool Steel-Blue Optical Glass (P2-2!)
+# Front Sensor Camera Hood + Deep Cool Steel-Blue Glass Lens (P1-2!)
 cam_hood_of = [
     (-0.110, -0.562, 1.645), ( 0.110, -0.562, 1.645),
     ( 0.150, -0.688, 1.245), (-0.150, -0.688, 1.245),
@@ -759,9 +780,7 @@ make_hollow_frame(
     "03_Sensor_HoodFrame", cam_hood_of, cam_hood_if,
     cam_hood_ob, cam_hood_ib, MAT_WHITE, bevel_width=0.0045
 )
-# Crisp stepped dark visor accent tucked directly under top hood brow
 make_box_oriented("03_Sensor_TopBrowStep", (0.0, -0.566, 1.578), (0.162, 0.042, 0.022), rot_euler=(-0.28, 0, 0), mat=MAT_DARK, bevel_width=0.002)
-# Recessed dark optical housing + stepped gunmetal outer bezel + cool steel-blue glass lens
 make_box_oriented("03_Sensor_DarkPod", (0.0, -0.525, 1.448), (0.180, 0.135, 0.205), rot_euler=(-0.28, 0, 0), mat=MAT_DARK, bevel_width=0.003)
 make_box_oriented("03_Sensor_OuterStepBezel", (0.0, -0.585, 1.445), (0.152, 0.026, 0.152), rot_euler=(-0.28, 0, 0), mat=MAT_DARK, bevel_width=0.003)
 make_box_oriented("03_Sensor_MetalBezel", (0.0, -0.594, 1.444), (0.134, 0.024, 0.134), rot_euler=(-0.28, 0, 0), mat=MAT_METAL, bevel_width=0.003)
@@ -785,7 +804,7 @@ fh_o = [
     [(0.000, -0.540, 1.325), (0.145, -0.540, 1.310), (0.265, -0.510, 1.220), (0.365, -0.460, 1.090)],
 ]
 fh_i = [[(0.0 if ci == 0 else x, y + 0.08, z - 0.02) for ci, (x, y, z) in enumerate(row)] for row in fh_o]
-make_solid_shell_from_grid("04_Forehead_SlopeArmor", fh_o, fh_i, MAT_WHITE, bevel_width=0.004, mirror_x=True, smooth_faces=False)
+forehead_obj = make_solid_shell_from_grid("04_Forehead_SlopeArmor", fh_o, fh_i, MAT_WHITE, bevel_width=0.004, mirror_x=True, smooth_faces=False)
 
 eye_mask_sec = [
     [(0.000, -0.735, 0.870), (0.296, -0.605, 0.930), (0.296, -0.542, 0.738), (0.000, -0.695, 0.680)],
@@ -856,7 +875,6 @@ make_solid_shell_from_grid(
     cell_mat_map=mouth_cell_mats, extra_mats=(MAT_BLACK,)
 )
 
-# Stage 3: Sculpted cool-white Chin Collar Socket framing upper/side edges of Red Chin!
 chin_socket_sec = [
     [(-0.072, -0.688, 0.478), ( 0.072, -0.688, 0.478), ( 0.082, -0.560, 0.470), (-0.082, -0.560, 0.470)],
     [(-0.080, -0.735, 0.315), ( 0.080, -0.735, 0.315), ( 0.090, -0.565, 0.320), (-0.090, -0.565, 0.320)],
@@ -873,7 +891,7 @@ make_loft("05_Chin_RedBlock", chin_sections, MAT_RED, closed_u=True, bevel_width
 
 
 # ===========================================================================
-# 6. RED FOREHEAD KEYSTONE + 4-BLADE V-FIN (P2 Inner Sub-Fin +2.5 deg spread!)
+# 6. RED FOREHEAD KEYSTONE + 4-BLADE V-FIN (Approved in v6!)
 # ===========================================================================
 rk_top = [(-0.120, -0.760, 1.190), ( 0.120, -0.760, 1.190), ( 0.132, -0.640, 1.205), (-0.132, -0.640, 1.205)]
 rk_mid = [(-0.114, -0.855, 0.985), ( 0.114, -0.855, 0.985), ( 0.126, -0.700, 0.995), (-0.126, -0.700, 0.995)]
@@ -917,7 +935,6 @@ make_heroic_diamond_blade(
     mid_width_keep=0.68, tip_chord=0.016,
     ridge_forward=0.048, back_thick=0.030, bevel_w=0.0018
 )
-# Auditor P2 micro-polish: Inner Sub V-fin FrontElev ~77.5 deg (tip X: 0.358 -> 0.392)!
 make_heroic_diamond_blade(
     "06_VFin_InnerSub",
     root_top=(0.115, -0.700, 1.245),
@@ -929,7 +946,7 @@ make_heroic_diamond_blade(
 
 
 # ===========================================================================
-# 7. CHEEK GUARD + INDEPENDENT PROTRUDING VENT POD + DETAILED EAR ARMOR
+# 7. CHEEK GUARD + VENT POD + SURFACE-SNAPPED SHOULDER SLOT + CLEAN EAR ARMOR
 # ===========================================================================
 cheek_guard_outer = [
     [(0.258, -0.630, 0.840), (0.320, -0.612, 0.865), (0.375, -0.538, 0.862)],
@@ -940,16 +957,16 @@ cheek_guard_outer = [
 cheek_guard_inner = [
     [(x - 0.030, y + 0.082, z) for (x, y, z) in row] for row in cheek_guard_outer
 ]
-make_solid_shell_from_grid(
+cheek_obj = make_solid_shell_from_grid(
     "07_CheekGuard_FrontBlade", cheek_guard_outer, cheek_guard_inner,
     MAT_WHITE, bevel_width=0.004, mirror_x=True, smooth_faces=False, sharp_cols=(1,)
 )
 
-# Subtle recessed dark accent slit near lower-outer CheekGuard tip (seen in Reference 3/4 & SIDE!)
-make_recessed_port(
-    "07_CheekGuard_LowerNotch",
-    center=(0.275, -0.576, 0.305), normal=(0.35, -0.93, 0.08),
-    width=0.022, height=0.055, frame_w=0.005, depth=0.018,
+# Surface-snapped lower cheek vertical notch (P1-2: bevel=0.0010 -> 0 bevel clamp!)
+make_surface_snapped_port(
+    "07_CheekGuard_LowerNotch", cheek_obj,
+    approx_pt=(0.278, -0.578, 0.305), out_hint=(0.35, -0.93, 0.05),
+    width=0.022, height=0.056, frame_w=0.005, proud_h=0.004, embed_d=0.014,
     frame_mat=MAT_WHITE_COOL, pocket_mat=MAT_DARK, mirror_x=True
 )
 
@@ -987,16 +1004,16 @@ vent_roof_sec = [
     [vent_of[0], vent_of[1], (0.595, -0.145, 0.992), (0.395, -0.492, 0.915)],
     [vent_ob[0], vent_ob[1], (0.548,  0.040, 1.000), (0.378, -0.415, 0.930)],
 ]
-make_loft(
+vent_roof_obj = make_loft(
     "07_VentPod_UpperShoulderRoof", vent_roof_sec, MAT_WHITE,
     closed_u=True, bevel_width=0.0045, mirror_x=True, smooth_faces=False
 )
 
-# Stage 3: Iconic dark rectangular service slot on the upper chamfer of the Vent Shoulder (3/4 & TOP!)
-make_recessed_port(
-    "07_VentPod_ShoulderSlot",
-    center=(0.565, -0.165, 0.975), normal=(0.55, -0.25, 0.79),
-    width=0.056, height=0.032, frame_w=0.007, depth=0.020,
+# P0-2 FIX: Surface-snapped Vent Shoulder Service Slot (100% visible in 3/4 & TOP!)
+make_surface_snapped_port(
+    "07_VentPod_ShoulderSlot", vent_roof_obj,
+    approx_pt=(0.565, -0.120, 0.985), out_hint=(0.55, -0.15, 0.82),
+    width=0.056, height=0.030, frame_w=0.007, proud_h=0.006, embed_d=0.016,
     frame_mat=MAT_WHITE_COOL, pocket_mat=MAT_DARK, mirror_x=True
 )
 
@@ -1042,32 +1059,32 @@ for k, frac in enumerate((0.25, 0.50, 0.75)):
         closed_u=True, bevel_width=0.0025, mirror_x=True, smooth_faces=False
     )
 
-# Ear-Side Armor Casing with subtle recessed mid-vertical panel step (SIDE & 3/4!)
-ear_base = [
-    [(0.515, 0.02, 1.010), (0.592, 0.02, 0.995), (0.645, 0.02, 0.938), (0.570, 0.02, 0.470), (0.460, 0.02, 0.435)],
-    [(0.505, 0.22, 1.032), (0.575, 0.22, 1.010), (0.625, 0.22, 0.935), (0.560, 0.22, 0.465), (0.455, 0.20, 0.415)],
-    [(0.430, 0.42, 1.010), (0.485, 0.42, 0.985), (0.520, 0.43, 0.920), (0.470, 0.42, 0.445), (0.385, 0.39, 0.385)],
-]
-# Insert crisp vertical armor division groove along mid-ear (station 1 -> Y=0.22)!
-ear_grooved = [ear_base[0]]
-p0s, p1s, p2s = ear_base
-ear_grooved.append([tuple(Vector(b).lerp(Vector(a), 0.08)) for a, b in zip(p0s, p1s)])
-ear_grooved.append([tuple(Vector(b) + Vector((-0.006, 0.0, 0.0))) for b in p1s])
-ear_grooved.append([tuple(Vector(b).lerp(Vector(c), 0.08)) for b, c in zip(p1s, p2s)])
-ear_grooved.append(ear_base[2])
+# P0-1 & P1-1 FIX: Ear-Side Armor Casing with ONE hairline 0.0048 U-channel seam cleanly
+# BEHIND LowerStepPlate (at Y=0.25, NOT chopping LowerStepPlate in half!)
+ear_s0 = [(0.515, 0.02, 1.010), (0.592, 0.02, 0.995), (0.645, 0.02, 0.938), (0.570, 0.02, 0.470), (0.460, 0.02, 0.435)]
+ear_s1 = [(0.500, 0.25, 1.032), (0.568, 0.25, 1.010), (0.616, 0.25, 0.935), (0.554, 0.25, 0.465), (0.450, 0.23, 0.415)]
+ear_s2 = [(0.430, 0.42, 1.010), (0.485, 0.42, 0.985), (0.520, 0.43, 0.920), (0.470, 0.42, 0.445), (0.385, 0.39, 0.385)]
 
+ear_grooved = [
+    ear_s0,
+    [tuple(step_toward(Vector(b), Vector(a), 0.0025)) for a, b in zip(ear_s0, ear_s1)],
+    [tuple(step_toward(Vector(b), Vector(a), 0.0011) + Vector((-0.0042, 0.0, 0.0))) for a, b in zip(ear_s0, ear_s1)],
+    [tuple(step_toward(Vector(b), Vector(c), 0.0011) + Vector((-0.0042, 0.0, 0.0))) for b, c in zip(ear_s1, ear_s2)],
+    [tuple(step_toward(Vector(b), Vector(c), 0.0025)) for b, c in zip(ear_s1, ear_s2)],
+    ear_s2,
+]
 make_loft(
     "07_EarSide_ArmorCasing", ear_grooved, MAT_WHITE,
-    closed_u=True, bevel_width=0.0035, mirror_x=True, smooth_faces=False,
-    seam_row_indices=(1, 2), extra_mats=(MAT_SEAM,)
+    closed_u=True, bevel_width=0.0025, mirror_x=True, smooth_faces=False,
+    seam_row_indices=(2,), extra_mats=(MAT_SEAM,)
 )
 
-# Subtle raised lower-ear mechanical cheek plate (seen in SIDE & 3/4!)
+# P1-1 FIX: Crisp proud EarSide LowerStepPlate sitting cleanly in front of the Y=0.25 ear seam!
 ear_plate_sec = [
-    [(0.585, 0.04, 0.65), (0.615, 0.04, 0.64), (0.580, 0.04, 0.48), (0.550, 0.04, 0.49)],
-    [(0.575, 0.20, 0.66), (0.605, 0.20, 0.65), (0.570, 0.20, 0.48), (0.540, 0.20, 0.49)],
+    [(0.592, 0.04, 0.655), (0.625, 0.04, 0.642), (0.588, 0.04, 0.480), (0.555, 0.04, 0.490)],
+    [(0.578, 0.215, 0.665), (0.612, 0.215, 0.652), (0.576, 0.215, 0.480), (0.542, 0.215, 0.490)],
 ]
-make_loft("07_EarSide_LowerStepPlate", ear_plate_sec, MAT_WHITE_COOL, closed_u=True, bevel_width=0.003, mirror_x=True, smooth_faces=False)
+make_loft("07_EarSide_LowerStepPlate", ear_plate_sec, MAT_WHITE_COOL, closed_u=True, bevel_width=0.0028, mirror_x=True, smooth_faces=False)
 
 jaw_under_sec = [
     [(0.200, -0.49, 0.34), (0.295, -0.47, 0.35), (0.280, -0.44, 0.285), (0.195, -0.46, 0.285)],
@@ -1078,42 +1095,39 @@ make_loft("07_Jaw_LowerBridge", jaw_under_sec, MAT_WHITE, closed_u=True, bevel_w
 
 
 # ===========================================================================
-# 8. MULTI-STEPPED RECESSED TEMPLE VULCAN SOCKET (P2-1!)
+# 8. SURFACE-SNAPPED RECESSED TEMPLE VULCAN POD (P1-2: Uncut upper rim in TOP!)
 # ===========================================================================
 def make_vulcan_recessed_pod():
-    n = Vector((0.76, -0.60, 0.24)).normalized()
+    loc, n = sample_host_surface(helmet_obj, (0.395, -0.445, 1.132), out_hint=(0.76, -0.60, 0.24))
     rot_m = n.to_track_quat("Z", "Y").to_matrix().to_4x4()
-    center = Vector((0.390, -0.438, 1.135))
+    # Seat outer shroud slightly proud (+0.006 along true surface normal) so upper rim is 100% clean!
+    center = loc + n * 0.006
 
-    # 1) Outer tapered armored shroud blending smoothly into temple slope
     bm_sh = bmesh.new()
-    bmesh.ops.create_cone(bm_sh, cap_ends=True, cap_tris=False, segments=28, radius1=0.082, radius2=0.068, depth=0.032)
-    bmesh.ops.transform(bm_sh, matrix=Matrix.Translation(center - n * 0.002) @ rot_m, verts=bm_sh.verts)
-    finalize_mesh("08_Temple_VulcanShroud", bm_sh, MAT_WHITE, bevel_width=0.003, mirror_x=True, smooth_faces=True)
+    bmesh.ops.create_cone(bm_sh, cap_ends=True, cap_tris=False, segments=28, radius1=0.078, radius2=0.064, depth=0.032)
+    bmesh.ops.transform(bm_sh, matrix=Matrix.Translation(center - n * 0.004) @ rot_m, verts=bm_sh.verts)
+    finalize_mesh("08_Temple_VulcanShroud", bm_sh, MAT_WHITE, bevel_width=0.0028, mirror_x=True, smooth_faces=True)
 
-    # 2) Dark recessed socket groove ring (creates crisp recessed circular socket look!)
     bm_rk = bmesh.new()
-    bmesh.ops.create_cone(bm_rk, cap_ends=True, cap_tris=False, segments=28, radius1=0.056, radius2=0.056, depth=0.018)
-    bmesh.ops.transform(bm_rk, matrix=Matrix.Translation(center + n * 0.008) @ rot_m, verts=bm_rk.verts)
+    bmesh.ops.create_cone(bm_rk, cap_ends=True, cap_tris=False, segments=28, radius1=0.053, radius2=0.053, depth=0.016)
+    bmesh.ops.transform(bm_rk, matrix=Matrix.Translation(center + n * 0.006) @ rot_m, verts=bm_rk.verts)
     finalize_mesh("08_Temple_VulcanRecessWell", bm_rk, MAT_BLACK, bevel_width=0.001, mirror_x=True, smooth_faces=True)
 
-    # 3) Machined metallic gun barrel rim nested inside recessed well
     bm_b = bmesh.new()
-    bmesh.ops.create_cone(bm_b, cap_ends=True, cap_tris=False, segments=24, radius1=0.042, radius2=0.038, depth=0.020)
-    bmesh.ops.transform(bm_b, matrix=Matrix.Translation(center + n * 0.012) @ rot_m, verts=bm_b.verts)
-    finalize_mesh("08_Temple_VulcanBarrel", bm_b, MAT_METAL, bevel_width=0.002, mirror_x=True, smooth_faces=True)
+    bmesh.ops.create_cone(bm_b, cap_ends=True, cap_tris=False, segments=24, radius1=0.040, radius2=0.036, depth=0.018)
+    bmesh.ops.transform(bm_b, matrix=Matrix.Translation(center + n * 0.010) @ rot_m, verts=bm_b.verts)
+    finalize_mesh("08_Temple_VulcanBarrel", bm_b, MAT_METAL, bevel_width=0.0018, mirror_x=True, smooth_faces=True)
 
-    # 4) Deep black muzzle bore
     bm_h = bmesh.new()
-    bmesh.ops.create_cone(bm_h, cap_ends=True, cap_tris=False, segments=20, radius1=0.024, radius2=0.024, depth=0.012)
-    bmesh.ops.transform(bm_h, matrix=Matrix.Translation(center + n * 0.018) @ rot_m, verts=bm_h.verts)
+    bmesh.ops.create_cone(bm_h, cap_ends=True, cap_tris=False, segments=20, radius1=0.022, radius2=0.022, depth=0.012)
+    bmesh.ops.transform(bm_h, matrix=Matrix.Translation(center + n * 0.015) @ rot_m, verts=bm_h.verts)
     finalize_mesh("08_Temple_VulcanBore", bm_h, MAT_BLACK, bevel_width=0.001, mirror_x=True, smooth_faces=True)
 
 make_vulcan_recessed_pod()
 
 
 # ===========================================================================
-# BUILT-IN GEOMETRY INTEGRITY SELF-CHECK (STRICT NM=0 & VENT BLEED=0!)
+# BUILT-IN INTEGRITY SELF-CHECKS (NM=0, VENT BLEED=0, SURFACE PORTS 100% VISIBLE!)
 # ===========================================================================
 depsgraph = bpy.context.evaluated_depsgraph_get()
 total_nm = 0
@@ -1150,8 +1164,21 @@ for iu in range(10):
         if loc_s is not None and (loc_p is None or dist_s < dist_p - 1e-4):
             bleed_hits += 1
 
+# Port visibility check: raycast from outside along -normal; must hit Backing BEFORE host!
+port_vis_report = {}
+for pname, hname, p_center, p_norm in SURFACE_PORTS_AUDIT:
+    h_bvh = BVHTree.FromObject(bpy.data.objects[hname].evaluated_get(depsgraph), depsgraph)
+    b_bvh = BVHTree.FromObject(bpy.data.objects[f"{pname}_Backing"].evaluated_get(depsgraph), depsgraph)
+    origin = p_center + p_norm * 0.20
+    ray_d = -p_norm
+    loc_b, _, _, dist_b = b_bvh.ray_cast(origin, ray_d, 0.5)
+    loc_h, _, _, dist_h = h_bvh.ray_cast(origin, ray_d, 0.5)
+    visible = (loc_b is not None) and (loc_h is None or dist_b < dist_h)
+    port_vis_report[pname] = "VISIBLE" if visible else "BURIED"
+
 print(f"SELF_CHECK: total_non_manifold_edges={total_nm} details={nm_report}")
 print(f"SELF_CHECK: vent_cavity_helmet_bleed_rays={bleed_hits}/100")
+print(f"SELF_CHECK: surface_ports_visibility={port_vis_report}")
 
 
 # ===========================================================================
@@ -1267,17 +1294,18 @@ for vname, (loc, tgt, oscale, rz) in MAIN_VIEWS.items():
     scene.render.filepath = str(RENDER_DIR / f"shaded-{vname}.png")
     bpy.ops.render.render(write_still=True)
 
-# 2. Render Pure Clay views (preserving recessed physical seam contrast in clay!)
+# 2. Render Pure Clay views (P0-1: physical panel seams use pure MAT_CLAY so ONLY
+#    real 3D groove depth + GTAO shows in clay — ZERO fake painted black lines!)
 for obj in root.children:
     if obj.type == "MESH":
         is_cavity = any(k in obj.name for k in (
             "Plenum", "BlackMask", "CraniumCore", "ExhaustWell", "VulcanBore",
-            "VulcanRecessWell", "Backing"
+            "VulcanRecessWell", "Backing", "CenterLockSeam"
         ))
         if len(obj.data.materials) > 1:
             is_mouth = ("Faceplate" in obj.name)
             obj.data.materials[0] = MAT_CLAY
-            obj.data.materials[1] = MAT_CLAY_DARK if is_mouth else MAT_CLAY_SEAM
+            obj.data.materials[1] = MAT_CLAY_DARK if is_mouth else MAT_CLAY
         else:
             obj.data.materials.clear()
             obj.data.materials.append(MAT_CLAY_DARK if is_cavity else MAT_CLAY)
@@ -1303,6 +1331,7 @@ manifest = {
     "objectCount": len(part_names),
     "nonManifoldEdges": total_nm,
     "ventCavityBleedRays": bleed_hits,
+    "surfacePortsVisibility": port_vis_report,
     "parts": part_names,
     "blendFile": str(blend_path),
 }
