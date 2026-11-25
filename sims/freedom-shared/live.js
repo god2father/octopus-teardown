@@ -4,6 +4,7 @@
 // operator's cursor; any click, drag, wheel or key hands control over, and 25 s of quiet hands it back.
 import {warmComposer} from 'teardown-kit/warm.js';
 import {createConsole, DISPLAY_KEYS, DISPLAY_TXT, FOCUS_KEYS, FOCUS_TXT} from './console.js';
+import {HEAD_SOURCE_KEYS, HEAD_SOURCES} from './headSources.js';
 import {bi} from './i18n.js';
 import {DURATION, makeConsoleFrame, makeCursor, opsOf, stateAt, VIEW_FN} from './film.js';
 import {createStage, BG} from './stage.js';
@@ -91,6 +92,7 @@ export function runLive() {
   let T = 0;
   let simT = 0;
   let paused = false;
+  let show3dLabels = true;
   const tgt = {focus: 'hero', display: {labels: 0, ps: 1, xray: 0, exploded: 0, turn: 0}};
   const cur = {lift: 1, head: 0, pack: 0, reactor: 0, rail: 0, burst: 0, display: {labels: 0, ps: 1, xray: 0, exploded: 0, turn: 0}, turnA: 0};
   let burstAt = 0;
@@ -148,6 +150,18 @@ export function runLive() {
     else startTour();
   });
   addEventListener('pointerdown', takeOver);
+  const setHeadSource = (id) => {
+    const active = st.robot.setHeadSource(id);
+    ui.setHeadSource(active);
+    return active;
+  };
+  setHeadSource(st.robot.getHeadSource());
+  for (const k of HEAD_SOURCE_KEYS)
+    ui.headBtn[k].addEventListener('click', () => {
+      takeOver();
+      setHeadSource(k);
+      action = `HEAD SOURCE · ${HEAD_SOURCES[k].label}`;
+    });
   for (const k of FOCUS_KEYS)
     ui.btn[k].addEventListener('click', () => {
       takeOver();
@@ -171,6 +185,14 @@ export function runLive() {
       action = `${DISPLAY_TXT[k]} ${tgt.display[k] ? 'ON' : 'OFF'}`;
       setView(viewFor());
     });
+  if (ui.btn.labels3d) {
+    ui.btn.labels3d.addEventListener('click', () => {
+      takeOver();
+      pulse('labels3d');
+      show3dLabels = !show3dLabels;
+      action = `3D LABELS ${show3dLabels ? 'ON' : 'OFF'}`;
+    });
+  }
   ui.btn.pause.addEventListener('click', () => {
     takeOver();
     pulse('pause');
@@ -289,7 +311,7 @@ export function runLive() {
 
     odd = !odd;
     if (tier > 0 && odd) ui.pointer(cursor);
-    else frameConsole(simT, S, {cursor, runtime: T, logT, paused});
+    else frameConsole(simT, S, {cursor, runtime: T, logT, paused, show3dLabels});
 
     if (tourChip.classList.contains('on') !== AP.on || !tourChip.firstChild) {
       tourChip.classList.toggle('on', AP.on);
@@ -303,7 +325,7 @@ export function runLive() {
   };
   startTour();
   warmComposer(st.renderer, st.composer, st.scene, st.camera).then(() => requestAnimationFrame(frame));
-  window.LIVE = {st, cam, startTour, takeOver, get tier() {
+  window.LIVE = {st, cam, startTour, takeOver, setHeadSource, get tier() {
     return tier;
   }};
 }

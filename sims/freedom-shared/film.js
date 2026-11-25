@@ -281,7 +281,8 @@ export function makeConsoleFrame(ui, st, hist = stateAt) {
       return machineAt(tt, opsOf(hist(tt))).power.out;
     });
     const Pt = st.robot.points;
-    const fade = ss(0.9, 1.5, S.since) * (S.view === 'hero' ? Math.max(S.display.labels, 0) : 1);
+    const show3dLabels = extra.show3dLabels !== false;
+    const fade = show3dLabels ? ss(0.9, 1.5, S.since) * (S.view === 'hero' ? Math.max(S.display.labels, 0) : 1) : 0;
     const callouts = (CALLS[S.view] || []).map(([name, sub, at], i) => {
       if (fade < 0.02) return null;
       const p = st.project(at(Pt));
@@ -315,6 +316,7 @@ export function makeConsoleFrame(ui, st, hist = stateAt) {
       speed: mc.bp.speed,
       focus: S.focus,
       display: S.display,
+      show3dLabels,
       paused: !!extra.paused,
       subsys: {
         head: D(S.head > 0.05 ? {txt: 'TRACKING', c: 'a', focus: true} : {txt: 'ONLINE', c: 'g', focus: false}),

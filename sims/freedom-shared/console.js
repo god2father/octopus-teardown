@@ -3,6 +3,7 @@
 // Every label is bilingual (English + 中文).
 import {BUS, GUNS, SPEC} from './kin.js';
 import {bi, zh} from './i18n.js';
+import {DEFAULT_HEAD_SOURCE, HEAD_SOURCE_KEYS, HEAD_SOURCES} from './headSources.js';
 
 export const C = {ink: '#1d1d1f', mute: '#8d8981', faint: '#c9c4bc', line: 'rgba(40,36,30,.12)', paper: 'rgba(251,250,248,.88)', accent: '#e5452a', green: '#2e8a5a', blue: '#2b4ea6', dark: '#2a2a2c'};
 export const FOCUS_KEYS = ['hero', 'head', 'pack', 'reactor', 'railgun', 'burst'];
@@ -133,6 +134,19 @@ export function createConsole(app) {
       <span class="pill" data-r="pill" style="width:74px"></span></div>`),
   );
 
+  // ------------------------------------------------------------ HEAD SOURCE
+  panel(LX, 676, LW, 118, 'HEAD SOURCE', '09');
+  const headSub = add(`<div class="lb" style="position:absolute;left:${LX + 12}px;top:702px;width:${LW - 24}px;overflow:hidden;text-overflow:ellipsis">${HEAD_SOURCES[DEFAULT_HEAD_SOURCE].sub}</div>`);
+  const headBtn = {};
+  const hw = (LW - 30) / 2;
+  HEAD_SOURCE_KEYS.forEach((k, idx) => {
+    const col = idx % 2;
+    const rw = Math.floor(idx / 2);
+    const x = LX + 12 + col * (hw + 6);
+    const y = 722 + rw * 30;
+    headBtn[k] = add(`<div class="bt" data-head="${k}" style="left:${x}px;top:${y}px;width:${hw}px;height:24px;padding:0 6px;font-size:8px;letter-spacing:.8px">${bi(HEAD_SOURCES[k].label)}</div>`);
+  });
+
   // ------------------------------------------------------------ FLIGHT
   anchor = 'top-right';
   const RX = 1288;
@@ -164,7 +178,7 @@ export function createConsole(app) {
   panel(RX, 468, RW, 138, 'DISPLAY', '06');
   row(['labels', 'ps'], DISPLAY_TXT, RX + 12, 504);
   row(['xray', 'exploded'], DISPLAY_TXT, RX + 12, 534);
-  row(['turn'], DISPLAY_TXT, RX + 12, 564);
+  row(['turn', 'labels3d'], {...DISPLAY_TXT, labels3d: '3D LABELS'}, RX + 12, 564);
 
   // ------------------------------------------------------------ SUBSYSTEMS
   panel(RX, 618, RW, 164, 'SUBSYSTEMS', '07');
@@ -215,7 +229,7 @@ export function createConsole(app) {
   const spots = Object.fromEntries(Object.entries(btn).map(([k, n]) => [k, centre(n)]));
   let edgeX = 0;
   let edgeY = 0;
-  const PANELS = [[0, 0, 1600, 98], [LX, 108, LX + LW, 662], [RX, 108, RX + RW, 782], [OL.x, OL.y, OL.x + OL.w, OL.y + OL.h], [340, 632, 640, 742]];
+  const PANELS = [[0, 0, 1600, 98], [LX, 108, LX + LW, 794], [RX, 108, RX + RW, 782], [OL.x, OL.y, OL.x + OL.w, OL.y + OL.h], [340, 632, 640, 742]];
   const covered = (x, y, pad = 8) => {
     const offsets = [[0, -edgeY], [-edgeX, -edgeY], [edgeX, -edgeY], [0, edgeY], [0, 0]];
     return PANELS.some(([a, b, c, d], i) => {
@@ -238,9 +252,19 @@ export function createConsole(app) {
     n.style.borderColor = on ? C.accent : 'rgba(40,36,30,.2)';
   };
 
+  const setHeadSource = (id) => {
+    const cfg = HEAD_SOURCES[id];
+    if (!cfg) return;
+    for (const k of HEAD_SOURCE_KEYS) setBtn(headBtn[k], k === id);
+    headSub.textContent = cfg.sub;
+  };
+  setHeadSource(DEFAULT_HEAD_SOURCE);
+
   return {
     spots,
     btn,
+    headBtn,
+    setHeadSource,
     root: ui,
     layout(x, y) {
       edgeX = x;
@@ -329,6 +353,7 @@ export function createConsole(app) {
 
       for (const k of FOCUS_KEYS) setBtn(btn[k], s.focus === k);
       for (const k of DISPLAY_KEYS) setBtn(btn[k], s.display[k] > 0.5);
+      if (btn.labels3d) setBtn(btn.labels3d, s.show3dLabels !== false);
       btn.pause.textContent = s.paused ? '▶' : '❚❚';
 
       subRows.forEach((r) => {

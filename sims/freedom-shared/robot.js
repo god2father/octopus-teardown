@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import {rng} from 'teardown-kit/util.js';
 import {machineAt, poseAt, SPEC} from './kin.js';
+import {createHeadMount} from './headSources.js';
 
 const V3 = THREE.Vector3;
 const PI = Math.PI;
@@ -818,6 +819,7 @@ export function buildFreedom() {
   // over measured cross-sections, not a box: a narrow dome over a wider ear shell, a camera tower running back as a
   // crown ridge, the red beak crest, diamond-section V-fins, a ridged mask, tall cheek guards and yawed side vents.
   const head = node(neck, [0, 0.82, -0.08], 'head');
+  const origHead = node(head, [0, 0, 0], 'headOrig');
   const mir = (half) => [...half, ...half.slice().reverse().filter((p) => Math.abs(p[0]) > 1e-6).map(([x, y, z]) => [-x, y, z])];
   const headMaps = panelMaps(47, {withSeams: false, wear: 0.45});
   const headPaints = Object.fromEntries(['white', 'red', 'yellow'].map((key) => [
@@ -826,7 +828,7 @@ export function buildFreedom() {
     }),
   ]));
   const HA = (geo, key, pos = [0, 0, 0], rot = [0, 0, 0], opt = {}) =>
-    armor(geo, key, opt.parent ?? head, pos, rot, opt.asm ?? 'head', {
+    armor(geo, key, opt.parent ?? origHead, pos, rot, opt.asm ?? 'head', {
       dist: 1.4, material: headPaints[key], ...opt,
     });
   // helmet dome: a crowned shell, 1.08 m above the eyes on the centre line, 0.95 m beside the tower, 1.32 m wide at
@@ -871,12 +873,12 @@ export function buildFreedom() {
   cutLine(shellM, 1, -0.14, (q) => q[2] < -0.36);
   // the rim under the helmet, a narrower white band down to the neck (rear and rear 3/4 views)
   HA(smoothLoft([shellRing(0.3, 0.4, -0.33, -0.5, 0.02, 0.08), shellRing(-0.05, 0.64, -0.33, -0.52, 0.02, 0.1), shellRing(-0.95, 0.64, -0.33, -0.52, 0.02, 0.1), shellRing(-1.2, 0.5, -0.3, -0.5, 0.02, 0.1)], 2, 1), 'white', [0, 0, 0], [0, 0, 0], {dist: 1.2});
-  frame(rbox(1.0, 0.9, 1.6, 0.1), head, [0, 0.1, -0.4], [0, 0, 0], M.frame); // the skull inside
-  frame(rbox(0.66, 0.95, 0.1, 0.03), head, [0, -0.1, 0.53], [0, 0, 0], M.pocket); // dark backing behind the face
+  frame(rbox(1.0, 0.9, 1.6, 0.1), origHead, [0, 0.1, -0.4], [0, 0, 0], M.frame); // the skull inside
+  frame(rbox(0.66, 0.95, 0.1, 0.03), origHead, [0, -0.1, 0.53], [0, 0, 0], M.pocket); // dark backing behind the face
   // camera tower: leans back, 0.47 m wide at the brow and 0.3 m at its top 1.3 m above the eyes
   const twRing = (y, hw, zF, zB) => [[-hw, y, zB], [-hw, y, zF - 0.05], [-hw + 0.05, y, zF], [hw - 0.05, y, zF], [hw, y, zF - 0.05], [hw, y, zB]];
   HA(smoothLoft([twRing(0.46, 0.235, 1.0, 0.45), twRing(0.66, 0.235, 1.0, 0.4), twRing(1.12, 0.19, 0.86, 0.3), twRing(1.22, 0.18, 0.8, 0.26), twRing(1.3, 0.15, 0.64, 0.22)], 1, 1, true, true, 0.03), 'white', [0, 0, 0], [0, 0, 0], {edgeAngle: 50, dist: 1.6});
-  const sensor = node(head, [0, 0.88, 0.932]);
+  const sensor = node(origHead, [0, 0.88, 0.932]);
   sensor.rotation.x = -0.295;
   frame(prism([[-0.132, 0.12], [-0.106, 0.18], [0.106, 0.18], [0.132, 0.12], [0.101, -0.175], [-0.101, -0.175]], 0.031, 0.014), sensor, [0, 0, 0], [0, 0, 0], M.pocket);
   frame(rbox(0.215, 0.204, 0.048, 0.035), sensor, [0, -0.043, 0.015], [0, 0, 0], M.joint);
@@ -928,7 +930,7 @@ export function buildFreedom() {
     HA(blade([s * 0.12, 0.25, 0.96], [s * 1.52, 1.49, 0.01], 0.204, 0.071, [0, -0.45, 1], {up: [s * 0.12, 0.43, 0.95], front: [s * 0.152, 0.25, 1.028], low: [s * 0.105, 0.06, 0.97], back: [s * 0.12, 0.25, 0.86]}), 'yellow', [0, 0, 0], [0, 0, 0], {asm: 'vfin', dist: 1.6, edges: false});
     HA(blade([s * 0.27, 0.36, 0.92], [s * 0.45, 1.75, 0.6], 0.12, 0.06, [s * 0.25, -0.2, 1]), 'yellow', [0, 0, 0], [0, 0, 0], {asm: 'vfin', dist: 1.6});
     // brow visor: sweeps out and back from the crest, its lower lip over the eye
-    const brow = node(head, [s * 0.1, 0, 0.94]);
+    const brow = node(origHead, [s * 0.1, 0, 0.94]);
     brow.rotation.y = s * 0.5;
     const browPlate = HA(prism([
       [0, 0.01], [0.18, 0.055], [0.32, 0.15], [0.48, 0.303],
@@ -936,7 +938,7 @@ export function buildFreedom() {
     ].map(([x, y]) => [x * s, y]), 0.132, 0.02), 'white', [0, 0.026, 0], [-0.21, 0, 0], {parent: brow});
     cutLine(browPlate, 0, s * 0.348, ([, y, z]) => y > 0.18 && z > 0.035);
     // eye: an amber wedge slanting down to the crest, in a dark socket
-    const eye = node(head, [s * 0.078, 0.027, 0.882]);
+    const eye = node(origHead, [s * 0.078, 0.027, 0.882]);
     eye.rotation.y = s * 0.54;
     const e = frame(prism([[0, -0.027], [0.18, 0.026], [0.44, 0.178], [0.385, 0.065], [0.16, -0.024], [0.032, -0.075]].map(([x, y]) => [x * s, y]), 0.026, 0.004), eye, [0, 0, 0.013], [0, 0, 0], M.eye);
     frame(prism([[0.032, -0.075], [0.16, -0.024], [0.385, 0.065], [0.35, 0.017], [0.17, -0.066], [0.05, -0.101]].map(([x, y]) => [x * s, y]), 0.024, 0.004), eye, [0, 0, 0.007], [0, 0, 0], M.eyeLow).castShadow = false;
@@ -945,10 +947,10 @@ export function buildFreedom() {
     frame(prism([[-0.024, -0.014], [0.17, 0.058], [0.46, 0.215], [0.442, 0.077], [0.24, -0.067], [0.02, -0.125]].map(([x, y]) => [x * s, y]), 0.034, 0.006), eye, [0, 0, -0.027], [0, 0, 0], M.socket);
     // mouth slits, lying on the mask's two facets
     for (const y of [-0.19, -0.245]) {
-      frame(prism([[0, 0.01], [s * 0.081, -0.01], [s * 0.081, -0.023], [0, -0.006]], 0.012, 0.003), head, [0, y, y > -0.22 ? 0.872 : 0.87], [0, s * 0.64, 0], M.pocket);
+      frame(prism([[0, 0.01], [s * 0.081, -0.01], [s * 0.081, -0.023], [0, -0.006]], 0.012, 0.003), origHead, [0, y, y > -0.22 ? 0.872 : 0.87], [0, s * 0.64, 0], M.pocket);
     }
     // cheek guard: a tall slab from the brow to below the chin line
-    const ck = node(head, [s * 0.415, 0, 0.62]);
+    const ck = node(origHead, [s * 0.415, 0, 0.62]);
     ck.rotation.y = s * 0.22;
     const ckO = (z, yLo, yMid, yTop, flare) => [
       [-0.09, Math.min(0.027, yTop - 0.06)], [0.085 + flare, yTop],
@@ -965,7 +967,7 @@ export function buildFreedom() {
     cutLine(cheek, 1, -0.34, ([x, , z]) => x * s > -0.02 && z > -0.12);
     HA(prism([[0.64, -0.31], [0.45, -0.37], [0.47, -0.51], [0.5, -0.575], [0.57, -0.51]].map(([x, y]) => [x * s, y]), 0.23, 0.023), 'white', [0, 0, 0.105], [0, 0, 0], {reg: false});
     // A single cheek plate with tapered openings over the dark vent cavity.
-    const vent = node(head, [s * 0.572, -0.049, 0.204]);
+    const vent = node(origHead, [s * 0.572, -0.049, 0.204]);
     vent.rotation.y = s * 0.72;
     vent.translateZ(0.048);
     const outline = [[-0.237, 0.19], [-0.14, 0.325], [0.105, 0.324], [0.24, 0.225], [0.22, -0.066], [0.152, -0.199], [-0.032, -0.355], [-0.188, -0.283]];
@@ -1008,9 +1010,9 @@ export function buildFreedom() {
       ]);
       HA(slat, 'white', [0, 0, 0], [0, 0, 0], {parent: guardMesh, reg: false, edges: false});
     }
-    frame(rbox(0.09, 0.04, 0.03, 0.012), head, [s * 0.675, 0.53, 0.12], [0, s * 1.42, 0], M.pocket); // CIWS port on the visor
+    frame(rbox(0.09, 0.04, 0.03, 0.012), origHead, [s * 0.675, 0.53, 0.12], [0, s * 1.42, 0], M.pocket); // CIWS port on the visor
     // temple sensor: a dark disc in a steel ring
-    const ts = node(head, [s * 0.5, 0.35, 0.7]);
+    const ts = node(origHead, [s * 0.5, 0.35, 0.7]);
     ts.rotation.y = s * 1.0;
     const temple = HA(prism([
       [-0.15, -0.08], [-0.15, 0.06], [-0.078, 0.145], [0.082, 0.13],
@@ -1022,15 +1024,16 @@ export function buildFreedom() {
     // ear plate: a raised panel on the shell's flat side with three slits and a yellow marker, and the ear knob ahead of it
     cutLine(shellM, 2, -0.67, ([x, y]) => x * s > 0.64 && y > -0.22 && y < 0.25);
     for (const [z, y, width] of [[-0.81, 0.21, 0.085], [-0.94, 0.2, 0.055]]) {
-      frame(rbox(0.022, 0.035, width, 0.008), head, [s * 0.831, y, z], [0, s * 0.15, s * 0.17], M.pocket);
+      frame(rbox(0.022, 0.035, width, 0.008), origHead, [s * 0.831, y, z], [0, s * 0.15, s * 0.17], M.pocket);
     }
     HA(rbox(0.015, 0.032, 0.075, 0.006), 'yellow', [s * 0.869, 0.143, -0.68], [0, 0, 0], {asm: 'vfin', reg: false, edges: false});
     HA(cylX(0.094, 0.04, 24), 'white', [s * 0.85, 0.07, -0.35], [0, 0, 0], {reg: false});
-    frame(cylX(0.035, 0.027, 16), head, [s * 0.873, 0.07, -0.35], [0, 0, 0], M.joint);
-    frame(rbox(0.085, 0.04, 0.03, 0.009), head, [s * 0.43, 0.342, -1.255], [0, s * 0.6, 0], M.pocket);
+    frame(cylX(0.035, 0.027, 16), origHead, [s * 0.873, 0.07, -0.35], [0, 0, 0], M.joint);
+    frame(rbox(0.085, 0.04, 0.03, 0.009), origHead, [s * 0.43, 0.342, -1.255], [0, s * 0.6, 0], M.pocket);
   }
-  frame(rbox(0.16, 0.09, 0.035, 0.013), head, [0, 0.917, -1.123], [0.49, 0, 0], M.pocket);
+  frame(rbox(0.16, 0.09, 0.035, 0.013), origHead, [0, 0.917, -1.123], [0.49, 0, 0], M.pocket);
   HA(rbox(0.085, 0.026, 0.085, 0.008), 'yellow', [0, 1.043, -1.17], [-0.28, 0, 0], {asm: 'vfin', reg: false});
+  const headMount = createHeadMount(head, origHead);
   powerLine(neck, [0, -0.2, 0], [0, 0.7, 0], 0.05);
 
   // ============================================================ arms (built on the left, mirrored for the right)
@@ -1306,6 +1309,7 @@ export function buildFreedom() {
       material.roughness = M[key].roughness;
     }
     const xr = ops.xray ?? 0;
+    headMount.updateEffects(ps, xr);
     const glass = xr > 0.02;
     if (glass !== glassOn) {
       glassOn = glass;
@@ -1381,5 +1385,14 @@ export function buildFreedom() {
     foot: (i = 1) => wp(legs[i].ankle, 0, -2.2, 2.2),
     skirt: () => wp(body, 1.0, -0.8, 1.1),
   };
-  return {group, body, update, points, materials: M, state};
+  return {
+    group,
+    body,
+    update,
+    points,
+    materials: M,
+    state,
+    setHeadSource: headMount.setSource,
+    getHeadSource: headMount.getSource,
+  };
 }
